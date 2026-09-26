@@ -6,7 +6,7 @@ version: '3.8'
 services:
   bluetti-mqtt:
     # Uses the pre-built image from the GitHub Container Registry
-    image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
+    image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-elite200v2-mqtt
     restart: unless-stopped
     
@@ -44,7 +44,7 @@ services:
 
   # Optional service for device discovery
   bluetti-discovery:
-    image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
+    image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-discovery
     privileged: true
     network_mode: host
@@ -61,7 +61,7 @@ services:
 
   # Optional service for logging
   bluetti-logger:
-    image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
+    image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-logger
     privileged: true
     network_mode: host

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Automatic installation script for the Bluetti Elite 200 V2 MQTT Bridge
-# Usage: curl -sSL https://raw.githubusercontent.com/JordiGrasvi/bluetti-elite200v2-mqtt/main/install.sh | bash
+# Usage: curl -sSL https://raw.githubusercontent.com/sq7lrx/bluetti-elite200v2-mqtt/main/install.sh | bash
 
 set -e
 
@@ -36,16 +36,16 @@ SERVICE_NAME="bluetti-mqtt"
 
 print_info "Installing the Bluetti Elite 200 V2 MQTT Bridge..."
 
-# Check whether Python 3.7+ is installed
+# Check whether Python 3.10+ is installed
 if ! command -v python3 &> /dev/null; then
-    print_error "Python 3 is not installed. Please install Python 3.7 or later."
+    print_error "Python 3 is not installed. Please install Python 3.10 or later."
     exit 1
 fi
 
 PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-REQUIRED_VERSION="3.7"
+REQUIRED_VERSION="3.10"
 
-if ! python3 -c "import sys; exit(0 if sys.version_info >= (3, 7) else 1)"; then
+if ! python3 -c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)"; then
     print_error "Python $PYTHON_VERSION detected. Python $REQUIRED_VERSION or later is required."
     exit 1
 fi
@@ -65,7 +65,7 @@ if [ -d "$INSTALL_DIR" ]; then
     git pull origin main
 else
     print_info "Cloning the repository..."
-    git clone https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt.git "$INSTALL_DIR"
+    git clone https://github.com/sq7lrx/bluetti-elite200v2-mqtt.git "$INSTALL_DIR"
     cd "$INSTALL_DIR"
 fi
 

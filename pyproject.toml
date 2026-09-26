@@ -17,18 +17,17 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Home Automation",
     "Topic :: System :: Hardware",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 dependencies = [
     "aiomqtt>=2.0",
-    "bleak>=0.19.0",
+    "bleak>=0.22",
     "crcmod>=1.7",
 ]
 
@@ -49,9 +48,9 @@ bluetti-discovery = "bluetti_mqtt.discovery_cli:main"
 bluetti-logger = "bluetti_mqtt.logger_cli:main"
 
 [project.urls]
-Homepage = "https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt"
-Repository = "https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt.git"
-Issues = "https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt/issues"
+Homepage = "https://github.com/sq7lrx/bluetti-elite200v2-mqtt"
+Repository = "https://github.com/sq7lrx/bluetti-elite200v2-mqtt.git"
+Issues = "https://github.com/sq7lrx/bluetti-elite200v2-mqtt/issues"
 
 [tool.setuptools_scm]
 write_to = "bluetti_mqtt/_version.py"

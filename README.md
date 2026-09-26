@@ -1,9 +1,9 @@
 # Bluetti Elite 200 V2 MQTT Bridge
 
-[![CI](https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt/workflows/CI/badge.svg)](https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt/actions)
-[![Docker](https://img.shields.io/badge/docker-ghcr.io-blue)](https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt/pkgs/container/bluetti-elite200v2-mqtt)
+[![CI](https://github.com/sq7lrx/bluetti-elite200v2-mqtt/actions/workflows/ci.yml/badge.svg)](https://github.com/sq7lrx/bluetti-elite200v2-mqtt/actions/workflows/ci.yml)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io-blue)](https://github.com/sq7lrx/bluetti-elite200v2-mqtt/pkgs/container/bluetti-elite200v2-mqtt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
 This project provides an MQTT interface for the Bluetti Elite 200 V2 power station, allowing you to read data from the device over Bluetooth and publish it to an MQTT broker for integration with home automation systems such as Home Assistant.
 
@@ -17,8 +17,9 @@ The fork exists to keep the bridge running on current Python and library version
 - **Migration from `asyncio-mqtt` to `aiomqtt` 2.x** — the old library was renamed and its API changed. Messages are now consumed through the `Client.messages` property instead of the removed `filtered_messages()`, and `Message.topic` is converted to a string before it is matched, which previously raised a `TypeError` on every incoming command. This also lifts the upper pin on `paho-mqtt`.
 - **Python 3.12+ compatibility** — the server started through `asyncio.get_event_loop()`, which no longer creates a loop implicitly and fails outright on Python 3.14. Startup now runs under `asyncio.run()`.
 - **Full translation to English** — documentation, console output, docstrings, comments and shell scripts were translated from Catalan, and a couple of malformed README code blocks were repaired.
+- **Refreshed CI** — the workflow now tests on Python 3.10–3.13, uses current action versions, and publishes multi-arch images to `ghcr.io/sq7lrx/bluetti-elite200v2-mqtt`.
 
-Upstream behavior, the MQTT topic layout and the Home Assistant integration are unchanged.
+Upstream behavior, the MQTT topic layout and the Home Assistant integration are unchanged. The minimum supported Python version is now 3.10, which is what Bleak 3.x requires.
 
 ## Acknowledgements
 
@@ -35,7 +36,7 @@ This repository was created thanks to the outstanding work of [warhammerkid](htt
 
 ## Requirements
 
-- Python 3.7 or later
+- Python 3.10 or later
 - BLE-compatible Bluetooth adapter
 - MQTT broker (such as Mosquitto)
 - Bluetti Elite 200 V2 power station
@@ -45,7 +46,7 @@ This repository was created thanks to the outstanding work of [warhammerkid](htt
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt.git
+git clone https://github.com/sq7lrx/bluetti-elite200v2-mqtt.git
 cd bluetti-elite200v2-mqtt
 ```
 
@@ -94,6 +95,18 @@ LOG_LEVEL=info
 
 If you prefer to use the container published on GHCR, you can do so very easily. The container needs access to the system D-Bus socket to talk to BlueZ (Bluetooth) and host networking to simplify discovery and avoid port issues.
 
+### Container image
+
+This fork publishes its own image, built by the `CI` workflow and pushed to the GitHub Container Registry:
+
+```
+ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
+```
+
+Multi-architecture images are built for `linux/amd64` and `linux/arm64`. Tags follow the branch and release tags: `latest` for the default branch, `main`, and `1.2.3` / `1.2` for `v*` releases.
+
+The image is built automatically on every push to `main` and on version tags. You can also build it on demand from the **Actions** tab: select the **CI** workflow, click **Run workflow**, and leave *Push the container image to GHCR* enabled to publish the result (disable it for a build-only dry run).
+
 ### `docker run`
 
 ```bash
@@ -111,7 +124,7 @@ docker run -d \
    -e MQTT_TOPIC=bluetti \
    -e LOG_LEVEL=info \
    -e ENCRYPTION_KEY_FILE=/app/config/encryption_keys.json \
-   ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
+   ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
 ```
 
 ### Example `docker-compose.yml`
@@ -119,7 +132,7 @@ docker run -d \
 ```yaml
 services:
    bluetti:
-      image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
+      image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
       container_name: bluetti-mqtt
       network_mode: host
       restart: unless-stopped
@@ -159,7 +172,7 @@ docker compose up -d --force-recreate
 To pin an exact version, replace `:latest` with the digest:
 
 ```bash
-image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt@sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt@sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 
@@ -497,7 +510,7 @@ This project is not officially affiliated with Bluetti. Use it at your own risk.
 If you have problems or questions:
 
 1. Check the [Troubleshooting](#troubleshooting) section
-2. Search the existing [Issues](https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt/issues)
+2. Search the existing [Issues](https://github.com/sq7lrx/bluetti-elite200v2-mqtt/issues)
 3. Create a new issue if you cannot find a solution
 
 ---

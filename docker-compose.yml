@@ -4,7 +4,7 @@ services:
     build: .
     
     # Option 2: use a pre-built image (uncomment the line below and comment out 'build: .')
-    # image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
+    # image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
     
     container_name: bluetti-elite200v2-mqtt
     restart: unless-stopped
@@ -45,7 +45,7 @@ services:
   bluetti-discovery:
     # Uses the same configuration as the main service
     build: .
-    # image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
+    # image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-discovery
     privileged: true
     network_mode: host
@@ -64,7 +64,7 @@ services:
   bluetti-logger:
     # Uses the same configuration as the main service
     build: .
-    # image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
+    # image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-logger
     privileged: true
     network_mode: host

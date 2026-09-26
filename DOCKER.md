@@ -79,7 +79,7 @@ docker-compose --profile discovery up bluetti-discovery
 docker run --rm --privileged --network host \
   -v /var/run/dbus:/var/run/dbus:ro \
   --device /dev/bus/usb:/dev/bus/usb \
-  ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest bluetti-discovery
+  ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest bluetti-discovery
 ```
 
 ### Logger mode
@@ -100,7 +100,7 @@ docker run --rm --privileged --network host \
   -v /var/run/dbus:/var/run/dbus:ro \
   --device /dev/bus/usb:/dev/bus/usb \
   -e BLUETTI_MAC=XX:XX:XX:XX:XX:XX \
-  ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest test-connection
+  ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest test-connection
 
 # With the local image
 docker run --rm --privileged --network host \
@@ -119,7 +119,7 @@ docker run --rm --privileged --network host \
   -v /var/run/dbus:/var/run/dbus:ro \
   --device /dev/bus/usb:/dev/bus/usb \
   -e BLUETTI_MAC=XX:XX:XX:XX:XX:XX \
-  ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest verify-keys
+  ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest verify-keys
 
 # With the local image
 docker run --rm --privileged --network host \
