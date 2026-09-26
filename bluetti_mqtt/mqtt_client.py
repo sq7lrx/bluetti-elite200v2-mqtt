@@ -5,8 +5,7 @@ import json
 import logging
 import re
 from typing import List, Optional
-from asyncio_mqtt import Client, MqttError
-from paho.mqtt.client import MQTTMessage
+from aiomqtt import Client, Message, MqttError
 from bluetti_mqtt.bus import CommandMessage, EventBus, ParserMessage
 from bluetti_mqtt.core import BluettiDevice, DeviceCommand
 
@@ -535,10 +534,11 @@ class MQTTClient:
         await self.message_queue.put(msg)
 
     async def _handle_commands(self, client: Client):
-        async with client.filtered_messages('bluetti/command/#') as messages:
-            await client.subscribe('bluetti/command/#')
-            async for mqtt_message in messages:
-                await self._handle_command(mqtt_message)
+        await client.subscribe('bluetti/command/#')
+        async for mqtt_message in client.messages:
+            if not mqtt_message.topic.matches('bluetti/command/#'):
+                continue
+            await self._handle_command(mqtt_message)
 
     async def _handle_messages(self, client: Client):
         while True:
@@ -630,11 +630,12 @@ class MQTTClient:
 
         logging.info(f'Sent discovery message of {device.type}-{device.sn} to Home Assistant')
 
-    async def _handle_command(self, mqtt_message: MQTTMessage):
+    async def _handle_command(self, mqtt_message: Message):
         # Parse the mqtt_message.topic
-        m = COMMAND_TOPIC_RE.match(mqtt_message.topic)
+        topic = str(mqtt_message.topic)
+        m = COMMAND_TOPIC_RE.match(topic)
         if not m:
-            logging.warn(f'unknown command topic: {mqtt_message.topic}')
+            logging.warn(f'unknown command topic: {topic}')
             return
 
         # Find the matching device for the command
@@ -645,7 +646,7 @@ class MQTTClient:
 
         # Check if the device supports setting this field
         if not device.has_field_setter(m[3]):
-            logging.warn(f'Received command for unknown topic: {m[3]} - {mqtt_message.topic}')
+            logging.warn(f'Received command for unknown topic: {m[3]} - {topic}')
             return
 
         cmd: DeviceCommand = None
@@ -663,7 +664,7 @@ class MQTTClient:
             else:
                 raise AssertionError(f'unexpected enum type: {field.type}')
         else:
-            logging.warn(f'Received command for unhandled topic: {m[3]} - {mqtt_message.topic}')
+            logging.warn(f'Received command for unhandled topic: {m[3]} - {topic}')
             return
 
         await self.bus.put(CommandMessage(device, cmd))
