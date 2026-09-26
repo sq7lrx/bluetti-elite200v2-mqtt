@@ -33,6 +33,34 @@ This repository was created thanks to the outstanding work of [warhammerkid](htt
 - ✅ Automatic Home Assistant integration
 - ✅ Continuous monitoring of the device status
 - ✅ Support for multiple devices simultaneously
+- ✅ Live web dashboard (see [`dashboard/`](dashboard/README.md))
+
+## Live dashboard
+
+The [`dashboard/`](dashboard/README.md) directory contains a single-page React dashboard that shows
+every value published by the bridge in real time and can toggle the AC/DC outputs. It connects to
+the same MQTT broker through a small Node backend, so no broker WebSocket listener is required.
+
+The quickest way to get everything running is the Docker stack, which starts the broker, the bridge
+and the dashboard together:
+
+```bash
+cp .env.example .env    # set BLUETTI_MAC
+docker compose up -d    # http://localhost:8787
+```
+
+To run just the dashboard against a broker you already have:
+
+```bash
+cd dashboard
+npm install
+npm run build
+npm start   # http://localhost:8787
+```
+
+See [DOCKER.md](DOCKER.md) for the full stack reference and [`dashboard/README.md`](dashboard/README.md)
+for the UI itself.
+
 
 ## Requirements
 
@@ -93,7 +121,18 @@ LOG_LEVEL=info
 
 ## Running with Docker
 
-If you prefer to use the container published on GHCR, you can do so very easily. The container needs access to the system D-Bus socket to talk to BlueZ (Bluetooth) and host networking to simplify discovery and avoid port issues.
+The recommended setup is the Compose stack, which runs three services together: a Mosquitto broker, the Bluetooth bridge, and the web dashboard.
+
+```bash
+cp .env.example .env        # set BLUETTI_MAC
+docker compose up -d        # dashboard on http://localhost:8787
+```
+
+Don't know the MAC address yet? `docker compose --profile discovery up bluetti-discovery` scans for nearby devices.
+
+The bridge requires a **Linux host**: it needs `network_mode: host` plus the D-Bus socket to reach BlueZ, which Docker Desktop on macOS and Windows cannot provide. No `encryption_keys.json` is needed — encryption is self-contained in the bridge code.
+
+[DOCKER.md](DOCKER.md) covers configuration, credentials, the optional profiles and troubleshooting.
 
 ### Container image
 

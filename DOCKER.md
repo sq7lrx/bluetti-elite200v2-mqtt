@@ -1,240 +1,186 @@
 # Running with Docker
 
-This document explains how to run the Bluetti Elite 200 V2 MQTT Bridge using Docker.
+The Compose stack runs everything you need as three services:
+
+| Service | Image | Role |
+| --- | --- | --- |
+| `mosquitto` | `eclipse-mosquitto:2` | MQTT broker, published on `127.0.0.1:1883` |
+| `bluetti-mqtt` | built from `./Dockerfile` | Bluetooth bridge, publishes device state to MQTT |
+| `dashboard` | built from `./dashboard/Dockerfile` | Live web UI on <http://localhost:8787> |
+
+Two extra services (`bluetti-discovery` and `bluetti-logger`) sit behind Compose
+profiles and only start when you ask for them.
 
 ## Requirements
 
-- Docker and Docker Compose installed
-- A Bluetooth adapter accessible from the container
-- An `encryption_keys.json` file with the device keys
+- Docker with the Compose plugin (`docker compose`, v2)
+- **Linux host.** The bridge needs `network_mode: host` plus D-Bus access to talk
+  to BlueZ. Docker Desktop on macOS and Windows cannot pass Bluetooth through,
+  so run the bridge natively there.
+- A Bluetooth adapter, with the power station powered on and in range
 
-## Quick setup
+You do **not** need an `encryption_keys.json` file. Encryption is self-contained
+in `bluetti_mqtt/bluetooth/encryption.py`, which detects encrypted devices from
+the BLE advertisement and uses well-known keys.
 
-### Option A: Pre-built image (Recommended)
-
-Use the official image from the GitHub Container Registry:
-
-```bash
-# Create the required directories
-mkdir -p config logs
-
-# Copy the key file (replace with your real data)
-cp encryption_keys.json config/
-
-# Use the docker-compose file for the pre-built image
-docker-compose -f docker-compose.prebuilt.yml up -d
-
-# View logs
-docker-compose -f docker-compose.prebuilt.yml logs -f
-
-# Stop the application
-docker-compose -f docker-compose.prebuilt.yml down
-```
-
-### Option B: Local build
-
-Build the image locally from source:
+## Quick start
 
 ```bash
-# Create the required directories
-mkdir -p config logs
-
-# Copy the key file
-cp encryption_keys.json config/
-
-# Build and run locally
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop the application
-docker-compose down
+cp .env.example .env
+# set BLUETTI_MAC, and optionally MQTT_USERNAME / MQTT_PASSWORD
+docker compose up -d
 ```
 
-### Environment variable configuration
+Then open <http://localhost:8787>.
 
-Edit the corresponding docker-compose file and replace:
+Don't know the MAC address? Run a scan first:
+
+```bash
+docker compose --profile discovery up bluetti-discovery
+```
+
+### Using the published bridge image
+
+`docker-compose.prebuilt.yml` is identical but pulls
+`ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest` instead of building the bridge.
+The dashboard has no published image yet, so it is still built locally.
+
+```bash
+docker compose -f docker-compose.prebuilt.yml up -d
+```
+
+## Configuration
+
+Everything is driven by the `.env` file next to the Compose file — no values are
+hardcoded in the YAML, which also keeps the `check-private-data` pre-commit hook
+happy.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BLUETTI_MAC` | *(required)* | Device MAC address; Compose fails fast if unset |
+| `MQTT_PORT` | `1883` | Host port for the broker |
+| `MQTT_USERNAME` / `MQTT_PASSWORD` | *(empty)* | Broker credentials; empty means anonymous |
+| `MQTT_TOPIC` | `bluetti` | Topic root |
+| `POLLING_INTERVAL` | `5` | Seconds between device polls |
+| `HA_CONFIG` | `normal` | Home Assistant discovery: `normal`, `none`, `advanced` |
+| `LOG_LEVEL` / `VERBOSE` | `info` / `false` | Bridge logging |
+| `DASHBOARD_PORT` | `8787` | Host port for the web UI |
+| `DASHBOARD_HISTORY_POINTS` | `360` | In-memory history samples (1/second) |
+
+### Broker credentials
+
+`mosquitto/docker-entrypoint.sh` generates the broker config at startup from the
+same variables:
+
+- With `MQTT_USERNAME` and `MQTT_PASSWORD` set, it creates a password file and
+  sets `allow_anonymous false`.
+- With both empty it allows anonymous access and logs a warning.
+
+Either way the port is published on `127.0.0.1` only, so the broker is not
+exposed to your LAN. To share it with Home Assistant on another host, change the
+mapping in `docker-compose.yml`:
 
 ```yaml
-environment:
-  - BLUETTI_MAC=E4:B3:23:5B:F5:76    # Your real MAC address
-  - MQTT_HOST=192.168.1.100          # Your real MQTT IP
-  - MQTT_USERNAME=your_username      # If authentication is required
-  - MQTT_PASSWORD=your_password      # If authentication is required
+    ports:
+      - "1883:1883"
 ```
 
-## Advanced usage
+and set credentials before doing so.
 
-### Device discovery
+## How the services reach each other
+
+This trips people up, so it is worth stating plainly:
+
+- The **bridge** runs with `network_mode: host` (required for Bluetooth), so it
+  is *not* on the Compose network and cannot resolve the name `mosquitto`. It
+  connects to `127.0.0.1:1883`, the broker's published port.
+- The **dashboard** is on the Compose bridge network and connects to
+  `mosquitto:1883` by service name.
+
+That is why `MQTT_HOST` is set per-service in the Compose file rather than in
+`.env`.
+
+## Everyday commands
 
 ```bash
-# With the pre-built image
-docker-compose -f docker-compose.prebuilt.yml --profile discovery up bluetti-discovery
-
-# With a local build
-docker-compose --profile discovery up bluetti-discovery
-
-# Or directly with Docker (pre-built image)
-docker run --rm --privileged --network host \
-  -v /var/run/dbus:/var/run/dbus:ro \
-  --device /dev/bus/usb:/dev/bus/usb \
-  ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest bluetti-discovery
+docker compose ps                     # status
+docker compose logs -f bluetti-mqtt   # bridge logs
+docker compose logs -f dashboard      # dashboard logs
+docker compose restart bluetti-mqtt   # restart just the bridge
+docker compose down                   # stop everything
+docker compose down -v                # stop and drop broker persistence
+docker compose up -d --build          # rebuild after code changes
 ```
 
-### Logger mode
+Inspect the MQTT traffic directly:
 
 ```bash
-# With the pre-built image
-docker-compose -f docker-compose.prebuilt.yml --profile logger up bluetti-logger
-
-# With a local build
-docker-compose --profile logger up bluetti-logger
+docker compose exec mosquitto mosquitto_sub -t 'bluetti/#' -v
 ```
 
-### Connection test
+## Optional services
 
 ```bash
-# With the pre-built image
-docker run --rm --privileged --network host \
-  -v /var/run/dbus:/var/run/dbus:ro \
-  --device /dev/bus/usb:/dev/bus/usb \
-  -e BLUETTI_MAC=XX:XX:XX:XX:XX:XX \
-  ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest test-connection
+# Scan for nearby Bluetti devices
+docker compose --profile discovery up bluetti-discovery
 
-# With the local image
-docker run --rm --privileged --network host \
-  -v /var/run/dbus:/var/run/dbus:ro \
-  --device /dev/bus/usb:/dev/bus/usb \
-  -e BLUETTI_MAC=XX:XX:XX:XX:XX:XX \
-  bluetti-elite200v2-mqtt test-connection
+# Capture raw protocol traffic to ./logs/device.log
+docker compose --profile logger up bluetti-logger
 ```
-
-### Key verification
-
-```bash
-# With the pre-built image
-docker run --rm --privileged --network host \
-  -v ./config:/app/config:ro \
-  -v /var/run/dbus:/var/run/dbus:ro \
-  --device /dev/bus/usb:/dev/bus/usb \
-  -e BLUETTI_MAC=XX:XX:XX:XX:XX:XX \
-  ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest verify-keys
-
-# With the local image
-docker run --rm --privileged --network host \
-  -v ./config:/app/config:ro \
-  -v /var/run/dbus:/var/run/dbus:ro \
-  --device /dev/bus/usb:/dev/bus/usb \
-  -e BLUETTI_MAC=XX:XX:XX:XX:XX:XX \
-  bluetti-elite200v2-mqtt verify-keys
-```
-
-## Available environment variables
-
-| Variable | Description | Default | Required |
-|----------|------------|-------------|------------|
-| `BLUETTI_MAC` | Device MAC address | - | ✅ |
-| `MQTT_HOST` | MQTT broker host | - | ✅ |
-| `MQTT_PORT` | MQTT broker port | 1883 | ❌ |
-| `MQTT_USERNAME` | MQTT username | - | ❌ |
-| `MQTT_PASSWORD` | MQTT password | - | ❌ |
-| `MQTT_TOPIC` | MQTT base topic | bluetti | ❌ |
-| `LOG_LEVEL` | Logging level | info | ❌ |
-| `POLLING_INTERVAL` | Polling interval (seconds) | 5 | ❌ |
-| `HA_CONFIG` | Home Assistant configuration | normal | ❌ |
-| `VERBOSE` | Detailed logs | false | ❌ |
-| `ENCRYPTION_KEY_FILE` | Path to the key file | /app/config/encryption_keys.json | ❌ |
-
-## Volumes
-
-| Local volume | Container volume | Description |
-|-------------|------------------|-------------|
-| `./config` | `/app/config` | Configuration files (encryption_keys.json) |
-| `./logs` | `/app/logs` | Application logs |
 
 ## Troubleshooting
 
-### Error: "No such device"
+**The bridge cannot find the device**
+
+Confirm the host can see it, and that nothing else holds the connection — the
+power station accepts only one BLE client at a time, so the phone app or a
+locally running bridge will block the container.
 
 ```bash
-# Check that the Bluetooth adapter is accessible
-ls -la /dev/bus/usb/
-
-# Make sure the container has privileges
-# privileged: true in docker-compose.yml
+docker compose --profile discovery up bluetti-discovery
+bluetoothctl devices
 ```
 
-### Error: "Permission denied" for Bluetooth
+**`Permission denied` or D-Bus errors**
+
+The bridge needs `privileged: true` and the D-Bus socket, both already set in
+the Compose file. Check that the host's Bluetooth service is running:
 
 ```bash
-# Add the user to the bluetooth group (host)
-sudo usermod -a -G bluetooth $USER
-
-# Restart the Docker service
-sudo systemctl restart docker
+systemctl status bluetooth
 ```
 
-### Error: "Device not found"
+**The dashboard shows "Waiting for the first MQTT message"**
+
+The UI is connected to the broker but no device state has arrived. Check the
+bridge logs and confirm it is publishing:
 
 ```bash
-# Check that the device is visible
-docker run --rm --privileged --network host \
-  -v /var/run/dbus:/var/run/dbus:ro \
-  --device /dev/bus/usb:/dev/bus/usb \
-  bluetti-elite200v2-mqtt bluetti-discovery
+docker compose logs -f bluetti-mqtt
+docker compose exec mosquitto mosquitto_sub -t 'bluetti/state/#' -v -C 5
 ```
 
-### Detailed logs
+**MQTT shows as down in the dashboard header**
+
+Credentials most likely disagree. The broker, bridge and dashboard all read
+`MQTT_USERNAME` / `MQTT_PASSWORD` from `.env`, so change them in one place and
+run `docker compose up -d` again.
+
+**No hardware to hand**
+
+Start only the broker and dashboard, then feed them synthetic data:
 
 ```bash
-# Enable detailed logs
-docker-compose exec bluetti-mqtt \
-  python -m bluetti_mqtt.server_cli --broker $MQTT_HOST -v $BLUETTI_MAC
+docker compose up -d mosquitto dashboard
+node dashboard/tools/simulate.js
 ```
 
-## Custom build
+## Running the dashboard image on its own
 
 ```bash
-# Build the image locally
-docker build -t bluetti-elite200v2-mqtt .
-
-# With build arguments
-docker build --build-arg PYTHON_VERSION=3.11 -t bluetti-elite200v2-mqtt .
+docker build -t bluetti-dashboard ./dashboard
+docker run --rm -p 8787:8787 \
+  -e MQTT_HOST=192.0.2.10 \
+  -e MQTT_USERNAME=... -e MQTT_PASSWORD=... \
+  bluetti-dashboard
 ```
-
-## Integration with other services
-
-### With Home Assistant (Docker)
-
-```yaml
-# Add this to your Home Assistant docker-compose.yml
-services:
-  homeassistant:
-    # ... existing configuration
-    
-  mosquitto:
-    # ... MQTT configuration
-    
-  bluetti-mqtt:
-    image: bluetti-elite200v2-mqtt
-    depends_on:
-      - mosquitto
-    environment:
-      - MQTT_HOST=mosquitto
-    # ... rest of the configuration
-```
-
-### With Portainer
-
-1. Import the `docker-compose.yml` into Portainer
-2. Configure the environment variables in the web interface
-3. Mount the required volumes
-4. Run the stack
-
-## Security
-
-- **Never** include real keys in the repository's configuration files
-- Use Docker secrets for sensitive data in production
-- Restrict access to the configuration volumes
-- Consider using a non-root user inside the container (already configured)
