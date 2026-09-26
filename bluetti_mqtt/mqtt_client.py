@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass
+from decimal import Decimal
 from enum import auto, Enum, unique
 import json
 import logging
@@ -27,7 +28,7 @@ class MqttFieldConfig:
     id_override: Optional[str] = None  # Used to override Home Assistant field id
 
 
-COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(\w+)-(\d+)/([a-z_]+)$')
+COMMAND_TOPIC_RE = re.compile(r'^bluetti/command/(.+)-(\d+)/([a-z_0-9]+)$')
 NORMAL_DEVICE_FIELDS = {
     'dc_input_power': MqttFieldConfig(
         type=MqttFieldType.NUMERIC,
@@ -442,6 +443,37 @@ DC_INPUT_FIELDS = {
 }
 
 
+def _jsonable(value):
+    """Convert a parsed field value into a JSON-serializable primitive."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, Enum):
+        return value.name
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, (int, float, str)):
+        return value
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(v) for v in value]
+    return None
+
+
+def _stringify(value) -> Optional[str]:
+    """Serialize an arbitrary parsed field value for a raw MQTT state topic.
+
+    Returns None for values that cannot be represented usefully, so the caller
+    can skip them.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return 'ON' if value else 'OFF'
+    if isinstance(value, (list, tuple)):
+        return json.dumps(_jsonable(value), separators=(',', ':'))
+    converted = _jsonable(value)
+    return None if converted is None else str(converted)
+
+
 def battery_pack_fields(pack: int):
     return {
         'pack_status': MqttFieldConfig(
@@ -675,20 +707,25 @@ class MQTTClient:
 
         # Publish normal fields
         for name, value in msg.parsed.items():
-            # Skip unconfigured fields
-            if name not in NORMAL_DEVICE_FIELDS:
-                continue
-
-            # Build payload string
-            field = NORMAL_DEVICE_FIELDS[name]
-            if field.type == MqttFieldType.NUMERIC:
-                payload = str(value)
-            elif field.type == MqttFieldType.BOOL or field.type == MqttFieldType.BUTTON:
-                payload = 'ON' if value else 'OFF'
-            elif field.type == MqttFieldType.ENUM:
-                payload = value.name
+            if name in NORMAL_DEVICE_FIELDS:
+                # Build payload string
+                field = NORMAL_DEVICE_FIELDS[name]
+                if field.type == MqttFieldType.NUMERIC:
+                    payload = str(value)
+                elif field.type == MqttFieldType.BOOL or field.type == MqttFieldType.BUTTON:
+                    payload = 'ON' if value else 'OFF'
+                elif field.type == MqttFieldType.ENUM:
+                    payload = value.name
+                else:
+                    assert False, f'Unhandled field type: {field.type.name}'
             else:
-                assert False, f'Unhandled field type: {field.type.name}'
+                # Not one of the curated Home Assistant fields. Devices parse far
+                # more than that (pack health, energy totals, DC rails, ...), so
+                # publish the raw value as well instead of discarding it. These
+                # are state-only: no Home Assistant discovery is emitted for them.
+                payload = _stringify(value)
+                if payload is None:
+                    continue
 
             await client.publish(topic_prefix + name, payload=payload.encode())
 
