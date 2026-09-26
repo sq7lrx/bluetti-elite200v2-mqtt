@@ -7,6 +7,19 @@
 
 This project provides an MQTT interface for the Bluetti Elite 200 V2 power station, allowing you to read data from the device over Bluetooth and publish it to an MQTT broker for integration with home automation systems such as Home Assistant.
 
+## About this fork
+
+This is a fork of [JordiGrasvi/bluetti-elite200v2-mqtt](https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt), which in turn builds on [warhammerkid/bluetti_mqtt](https://github.com/warhammerkid/bluetti_mqtt). All credit for the original work and for the Elite 200 V2 adaptation goes to the upstream authors.
+
+The fork exists to keep the bridge running on current Python and library versions, and to make the project accessible to a wider audience. Changes compared to upstream:
+
+- **Bleak 3.x compatibility** — the helper tools in `tools/` used `BleakClient.get_services()`, which was removed when service discovery moved into `connect()`. They now read the `BleakClient.services` property.
+- **Migration from `asyncio-mqtt` to `aiomqtt` 2.x** — the old library was renamed and its API changed. Messages are now consumed through the `Client.messages` property instead of the removed `filtered_messages()`, and `Message.topic` is converted to a string before it is matched, which previously raised a `TypeError` on every incoming command. This also lifts the upper pin on `paho-mqtt`.
+- **Python 3.12+ compatibility** — the server started through `asyncio.get_event_loop()`, which no longer creates a loop implicitly and fails outright on Python 3.14. Startup now runs under `asyncio.run()`.
+- **Full translation to English** — documentation, console output, docstrings, comments and shell scripts were translated from Catalan, and a couple of malformed README code blocks were repaired.
+
+Upstream behavior, the MQTT topic layout and the Home Assistant integration are unchanged.
+
 ## Acknowledgements
 
 This repository was created thanks to the outstanding work of [warhammerkid](https://github.com/warhammerkid) and his project [bluetti_mqtt](https://github.com/warhammerkid/bluetti_mqtt). I am very grateful for his work, which made this specific adaptation for the Bluetti Elite 200 V2 possible. The original code has served as a solid foundation for developing this specialized version.
