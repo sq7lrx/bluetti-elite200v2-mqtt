@@ -21,7 +21,7 @@ def convert_license_to_json(license_file, mac_address=None, output_file="encrypt
     """
     
     try:
-        # Read and normalise (blank lines are ignored)
+        # Read and normalize (blank lines are ignored)
         with open(license_file, 'r') as f:
             raw_lines = [l.strip() for l in f.readlines()]
 

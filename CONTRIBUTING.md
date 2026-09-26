@@ -12,7 +12,7 @@ If you find a bug, please:
 2. Create a new issue with:
    - A clear description of the problem
    - Steps to reproduce the bug
-   - Expected behaviour vs. actual behaviour
+   - Expected behavior vs. actual behavior
    - System information (OS, Python version, etc.)
    - Relevant logs (without private data!)
 

@@ -51,7 +51,7 @@ class BluetoothLogParser:
                     
                     packet_count += 1
                     
-                    # Analyse the packet
+                    # Analyze the packet
                     self.analyze_packet(packet_data, packet_count)
                 
                 print(f"✅ Processed {packet_count} packets")
@@ -62,7 +62,7 @@ class BluetoothLogParser:
             return False
     
     def analyze_packet(self, data, packet_num):
-        """Analyses an individual packet"""
+        """Analyzes an individual packet"""
         if len(data) < 4:
             return
         
@@ -91,7 +91,7 @@ class BluetoothLogParser:
         bluetti_msg = hex_data[start_pos:]
         
         if len(bluetti_msg) >= 8:
-            # Analyse the opcodes
+            # Analyze the opcodes
             opcode1 = bluetti_msg[4:6]
             opcode2 = bluetti_msg[6:8]
             
@@ -186,7 +186,7 @@ class BluetoothLogParser:
             print("⚠️  No keys were extracted")
             return False
         
-        # Organise the keys by type
+        # Organize the keys by type
         organized_keys = {
             "possible_keys_32": [],
             "possible_tokens_64": [],
@@ -299,7 +299,7 @@ def main():
         sys.exit(0 if success else 1)
         
     except KeyboardInterrupt:
-        print("\n⏹️  Extraction cancelled by the user")
+        print("\n⏹️  Extraction canceled by the user")
         sys.exit(1)
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")

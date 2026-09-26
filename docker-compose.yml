@@ -36,7 +36,7 @@ services:
     devices:
       - /dev/bus/usb:/dev/bus/usb       # USB Bluetooth adapters
     
-    # Labels for organisation
+    # Labels for organization
     labels:
       - "com.docker.compose.project=bluetti-elite200v2"
       - "com.docker.compose.service=mqtt-bridge"

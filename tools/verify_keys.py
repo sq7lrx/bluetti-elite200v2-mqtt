@@ -160,7 +160,7 @@ class KeyVerifier:
             if received_data:
                 print(f"✅ Received {len(received_data)} messages")
                 
-                # Analyse the messages
+                # Analyze the messages
                 for i, data in enumerate(received_data[:3]):  # Show only the first 3
                     print(f"   Message {i+1}: {data.hex()}")
                     if len(data) >= 2 and data[0] == 0x2A and data[1] == 0x2A:
@@ -257,7 +257,7 @@ async def main():
         success = await verifier.run_verification()
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:
-        print("\n⏹️  Verification cancelled by the user")
+        print("\n⏹️  Verification canceled by the user")
         await verifier.disconnect()
         sys.exit(1)
     except Exception as e:

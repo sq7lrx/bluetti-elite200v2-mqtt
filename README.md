@@ -9,7 +9,7 @@ This project provides an MQTT interface for the Bluetti Elite 200 V2 power stati
 
 ## Acknowledgements
 
-This repository was created thanks to the outstanding work of [warhammerkid](https://github.com/warhammerkid) and his project [bluetti_mqtt](https://github.com/warhammerkid/bluetti_mqtt). I am very grateful for his work, which made this specific adaptation for the Bluetti Elite 200 V2 possible. The original code has served as a solid foundation for developing this specialised version.
+This repository was created thanks to the outstanding work of [warhammerkid](https://github.com/warhammerkid) and his project [bluetti_mqtt](https://github.com/warhammerkid/bluetti_mqtt). I am very grateful for his work, which made this specific adaptation for the Bluetti Elite 200 V2 possible. The original code has served as a solid foundation for developing this specialized version.
 
 ## Features
 
@@ -128,7 +128,7 @@ services:
 Then you just need to run:
 
 ```bash
-
+docker compose up -d
 ```
 
 ### Security notes
@@ -139,7 +139,7 @@ Then you just need to run:
 ### Updating the image
 
 ```bash
-## Configuration
+docker compose pull
 docker compose up -d --force-recreate
 ```
 
@@ -149,6 +149,8 @@ To pin an exact version, replace `:latest` with the digest:
 image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt@sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
+
+## Configuration
 
 ### Finding the device MAC address
 
@@ -203,9 +205,9 @@ This is the recommended and safest method:
    - Perform some operations (read status, change settings)
    - The log will be saved to `/sdcard/btsnoop_hci.log`
 
-3. **Analyse the traffic**:
+3. **Analyze the traffic**:
    - Transfer the `btsnoop_hci.log` file to your computer
-   - Use Wireshark to open and analyse the file
+   - Use Wireshark to open and analyze the file
    - Look for the authentication and handshake packets
    - Extract the encryption keys from the captured packets
 
@@ -214,7 +216,7 @@ This is the recommended and safest method:
    - You will need an Apple developer account
    - Install the configuration profile for Bluetooth logging
 
-2. **Capture and analyse**:
+2. **Capture and analyze**:
    - Similar to the Android process, but using Apple's tools
 
 #### Method 3: Firmware reverse engineering (Very advanced)
@@ -224,7 +226,7 @@ This is the recommended and safest method:
 1. **Firmware extraction**:
    - Disassemble the device (voids the warranty)
    - Connect to the flash memory chip
-   - Extract the firmware using specialised tools
+   - Extract the firmware using specialized tools
 
 2. **Firmware analysis**:
    - Use tools such as Ghidra, IDA Pro or Radare2
@@ -285,17 +287,17 @@ If the keys are correct, you should see messages such as:
 
 **Important note**: The keys shown in this example are fictitious. Every Bluetti device has its own unique keys, which you must obtain using one of the methods described above.
 
-#### Obtaining the device licence (Alternative method)
+#### Obtaining the device license (Alternative method)
 
-If you have access to the official Bluetti module, you can also generate a device licence file:
+If you have access to the official Bluetti module, you can also generate a device license file:
 
-1. **Generate the licence**:
+1. **Generate the license**:
    ```bash
    # Using the official Bluetti module
    ./bluetti_license_generator --device [MAC_ADDRESS] --output bluetti_device_licence.csv
    ```
 
-2. **Licence file format**:
+2. **License file format**:
    ```
    bluetti
    [TIMESTAMP]
@@ -304,12 +306,12 @@ If you have access to the official Bluetti module, you can also generate a devic
    ```
 
    Where:
-   - `TIMESTAMP`: Licence generation timestamp
+   - `TIMESTAMP`: License generation timestamp
    - `MD5_KEY`: 32-character hexadecimal MD5 key
    - `ENCRYPTION_KEY`: Full encryption key (very long)
 
 3. **Conversion to JSON format**:
-   If you have the licence file, you can convert it to the required JSON format:
+   If you have the license file, you can convert it to the required JSON format:
    ```bash
    python convert_license.py bluetti_device_licence.csv
    ```
@@ -320,7 +322,7 @@ The repository includes several tools to help you obtain and verify the keys:
 
 - `tools/extract_keys.py`: Extracts keys from Bluetooth logs
 - `tools/verify_keys.py`: Verifies that the keys are correct
-- `tools/convert_license.py`: Converts licence files to JSON format
+- `tools/convert_license.py`: Converts license files to JSON format
 - `tools/test_connection.py`: Tests the connection to the device
 
 ## Usage
@@ -437,7 +439,7 @@ python -m bluetti_mqtt.discovery_cli --log discovery.log [MAC_ADDRESS]
 ### The device does not connect
 
 1. Check that the MAC address is correct
-2. Make sure the device is nearby (< 10 metres)
+2. Make sure the device is nearby (< 10 meters)
 3. Check that no other applications are connected to the device
 4. Check the encryption keys
 
@@ -463,9 +465,9 @@ Contributions are welcome! Please:
 4. Push to the branch
 5. Open a Pull Request
 
-## Licence
+## License
 
-This project is licensed under the MIT licence. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT license. See the [LICENSE](LICENSE) file for more details.
 
 ## Acknowledgements
 

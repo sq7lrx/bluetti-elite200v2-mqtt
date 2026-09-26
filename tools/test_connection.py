@@ -230,7 +230,7 @@ async def main():
         sys.exit(0 if success else 1)
         
     except KeyboardInterrupt:
-        print("\n⏹️  Test cancelled by the user")
+        print("\n⏹️  Test canceled by the user")
         await tester.disconnect()
         sys.exit(1)
     except Exception as e:
