@@ -1,49 +1,49 @@
 services:
   bluetti-mqtt:
-    # Opció 1: Construir localment des del codi font
+    # Option 1: build locally from the source code
     build: .
     
-    # Opció 2: Utilitzar imatge pre-construïda (descomenta la línia següent i comenta 'build: .')
+    # Option 2: use a pre-built image (uncomment the line below and comment out 'build: .')
     # image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
     
     container_name: bluetti-elite200v2-mqtt
     restart: unless-stopped
     
-    # Accés a Bluetooth de l'host
+    # Access to the host's Bluetooth
     privileged: true
     network_mode: host
     
-    # Variables d'entorn - CONFIGURA AQUESTES DADES!
+    # Environment variables - SET THESE VALUES!
     environment:
-      - BLUETTI_MAC=XX:XX:XX:XX:XX:XX  # Substitueix per la teva MAC
-      - MQTT_HOST=192.168.1.100        # Substitueix per la teva IP MQTT
+      - BLUETTI_MAC=XX:XX:XX:XX:XX:XX  # Replace with your MAC
+      - MQTT_HOST=192.168.1.100        # Replace with your MQTT IP
       - MQTT_PORT=1883
-      - MQTT_USERNAME=mqttuser          # Opcional
-      - MQTT_PASSWORD=mqttpass          # Opcional
+      - MQTT_USERNAME=mqttuser          # Optional
+      - MQTT_PASSWORD=mqttpass          # Optional
       - MQTT_TOPIC=bluetti
       - LOG_LEVEL=info
-      - POLLING_INTERVAL=5              # Opcional: interval en segons
+      - POLLING_INTERVAL=5              # Optional: interval in seconds
       - HA_CONFIG=normal                # normal, none, advanced
-      - VERBOSE=false                   # true per a logs detallats
+      - VERBOSE=false                   # true for detailed logs
     
-    # Volums per a configuració i logs
+    # Volumes for configuration and logs
     volumes:
-      - ./config:/app/config:ro         # Munta encryption_keys.json aquí
-      - ./logs:/app/logs:rw             # Logs de l'aplicació
-      - /var/run/dbus:/var/run/dbus:ro  # Accés a D-Bus per Bluetooth
+      - ./config:/app/config:ro         # Mount encryption_keys.json here
+      - ./logs:/app/logs:rw             # Application logs
+      - /var/run/dbus:/var/run/dbus:ro  # D-Bus access for Bluetooth
     
-    # Dispositius necessaris per Bluetooth
+    # Devices required for Bluetooth
     devices:
-      - /dev/bus/usb:/dev/bus/usb       # Adaptadors USB Bluetooth
+      - /dev/bus/usb:/dev/bus/usb       # USB Bluetooth adapters
     
-    # Etiquetes per a organització
+    # Labels for organisation
     labels:
       - "com.docker.compose.project=bluetti-elite200v2"
       - "com.docker.compose.service=mqtt-bridge"
 
-  # Servei opcional per a descobriment de dispositius
+  # Optional service for device discovery
   bluetti-discovery:
-    # Utilitza la mateixa configuració que el servei principal
+    # Uses the same configuration as the main service
     build: .
     # image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-discovery
@@ -58,11 +58,11 @@ services:
       - /dev/bus/usb:/dev/bus/usb
     
     profiles:
-      - discovery  # Només s'executa amb --profile discovery
+      - discovery  # Only runs with --profile discovery
 
-  # Servei opcional per a logging
+  # Optional service for logging
   bluetti-logger:
-    # Utilitza la mateixa configuració que el servei principal
+    # Uses the same configuration as the main service
     build: .
     # image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-logger
@@ -71,7 +71,7 @@ services:
     command: bluetti-logger
     
     environment:
-      - BLUETTI_MAC=XX:XX:XX:XX:XX:XX  # Substitueix per la teva MAC
+      - BLUETTI_MAC=XX:XX:XX:XX:XX:XX  # Replace with your MAC
       - LOG_FILE=/app/logs/device.log
     
     volumes:
@@ -83,4 +83,4 @@ services:
       - /dev/bus/usb:/dev/bus/usb
     
     profiles:
-      - logger  # Només s'executa amb --profile logger
+      - logger  # Only runs with --profile logger

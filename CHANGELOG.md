@@ -1,45 +1,45 @@
 # Changelog
 
-Tots els canvis notables d'aquest projecte es documentaran en aquest fitxer.
+All notable changes to this project will be documented in this file.
 
-El format està basat en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-i aquest projecte segueix [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.0] - 2024-01-XX
 
-### Afegit
-- Suport inicial per a Bluetti Elite 200 V2
-- Connexió Bluetooth amb encriptació
-- Publicació de dades a MQTT
-- Integració automàtica amb Home Assistant
-- Eines d'ajuda per a l'obtenció de claus
-- Documentació completa en català
-- Scripts de verificació i test
-- Suport per a múltiples dispositius
-- Configuració via fitxers .env
-- Servei systemd per a execució automàtica
+### Added
+- Initial support for the Bluetti Elite 200 V2
+- Encrypted Bluetooth connection
+- Data publishing to MQTT
+- Automatic Home Assistant integration
+- Helper tools for obtaining the keys
+- Complete documentation in English
+- Verification and test scripts
+- Support for multiple devices
+- Configuration via .env files
+- systemd service for automatic startup
 
-### Característiques
-- Monitorització en temps real de:
-  - Percentatge de bateria
-  - Potència AC/DC d'entrada i sortida
-  - Voltatge i corrent de bateria
-  - Temperatura del dispositiu
-  - Estat de càrrega/descàrrega
-- Descobriment automàtic de dispositius
-- Logging configurable
-- Gestió d'errors robusta
-- Reconnexió automàtica
+### Features
+- Real-time monitoring of:
+  - Battery percentage
+  - AC/DC input and output power
+  - Battery voltage and current
+  - Device temperature
+  - Charging/discharging state
+- Automatic device discovery
+- Configurable logging
+- Robust error handling
+- Automatic reconnection
 
-### Eines incloses
-- `tools/convert_license.py`: Converteix fitxers de llicència a JSON
-- `tools/verify_keys.py`: Verifica les claus d'encriptació
-- `tools/test_connection.py`: Prova la connexió Bluetooth
-- `tools/extract_keys.py`: Extreu claus des de logs Bluetooth
+### Included tools
+- `tools/convert_license.py`: Converts license files to JSON
+- `tools/verify_keys.py`: Verifies the encryption keys
+- `tools/test_connection.py`: Tests the Bluetooth connection
+- `tools/extract_keys.py`: Extracts keys from Bluetooth logs
 
-### Documentació
-- README complet amb instruccions detallades
-- Guies per obtenir claus d'encriptació
-- Exemples de configuració
-- Resolució de problemes comuns
-- Instruccions d'instal·lació pas a pas
+### Documentation
+- Complete README with detailed instructions
+- Guides for obtaining the encryption keys
+- Configuration examples
+- Common troubleshooting
+- Step-by-step installation instructions

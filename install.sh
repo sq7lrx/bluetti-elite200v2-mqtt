@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# Script d'instal·lació automàtica per a Bluetti Elite 200 V2 MQTT Bridge
-# Ús: curl -sSL https://raw.githubusercontent.com/JordiGrasvi/bluetti-elite200v2-mqtt/main/install.sh | bash
+# Automatic installation script for the Bluetti Elite 200 V2 MQTT Bridge
+# Usage: curl -sSL https://raw.githubusercontent.com/JordiGrasvi/bluetti-elite200v2-mqtt/main/install.sh | bash
 
 set -e
 
-# Colors per a la sortida
+# Colors for the output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Funcions d'utilitat
+# Utility functions
 print_info() {
     echo -e "${BLUE}ℹ️  $1${NC}"
 }
@@ -34,11 +34,11 @@ INSTALL_DIR="$HOME/bluetti-elite200v2-mqtt"
 VENV_DIR="$INSTALL_DIR/venv"
 SERVICE_NAME="bluetti-mqtt"
 
-print_info "Instal·lant Bluetti Elite 200 V2 MQTT Bridge..."
+print_info "Installing the Bluetti Elite 200 V2 MQTT Bridge..."
 
-# Comprova si Python 3.7+ està instal·lat
+# Check whether Python 3.7+ is installed
 if ! command -v python3 &> /dev/null; then
-    print_error "Python 3 no està instal·lat. Si us plau, instal·la Python 3.7 o superior."
+    print_error "Python 3 is not installed. Please install Python 3.7 or later."
     exit 1
 fi
 
@@ -46,78 +46,78 @@ PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_inf
 REQUIRED_VERSION="3.7"
 
 if ! python3 -c "import sys; exit(0 if sys.version_info >= (3, 7) else 1)"; then
-    print_error "Python $PYTHON_VERSION detectat. Es requereix Python $REQUIRED_VERSION o superior."
+    print_error "Python $PYTHON_VERSION detected. Python $REQUIRED_VERSION or later is required."
     exit 1
 fi
 
-print_success "Python $PYTHON_VERSION detectat"
+print_success "Python $PYTHON_VERSION detected"
 
-# Comprova si git està instal·lat
+# Check whether git is installed
 if ! command -v git &> /dev/null; then
-    print_error "Git no està instal·lat. Si us plau, instal·la git primer."
+    print_error "Git is not installed. Please install git first."
     exit 1
 fi
 
-# Clona o actualitza el repositori
+# Clone or update the repository
 if [ -d "$INSTALL_DIR" ]; then
-    print_info "Actualitzant repositori existent..."
+    print_info "Updating the existing repository..."
     cd "$INSTALL_DIR"
     git pull origin main
 else
-    print_info "Clonant repositori..."
+    print_info "Cloning the repository..."
     git clone https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt.git "$INSTALL_DIR"
     cd "$INSTALL_DIR"
 fi
 
-# Crea entorn virtual
-print_info "Creant entorn virtual..."
+# Create the virtual environment
+print_info "Creating the virtual environment..."
 python3 -m venv "$VENV_DIR"
 
-# Activa entorn virtual
+# Activate the virtual environment
 source "$VENV_DIR/bin/activate"
 
-# Actualitza pip
-print_info "Actualitzant pip..."
+# Update pip
+print_info "Updating pip..."
 pip install --upgrade pip
 
-# Instal·la dependències
-print_info "Instal·lant dependències..."
+# Install the dependencies
+print_info "Installing the dependencies..."
 pip install -r requirements.txt
 
-# Instal·la el paquet en mode desenvolupament
-print_info "Instal·lant bluetti-mqtt..."
+# Install the package in development mode
+print_info "Installing bluetti-mqtt..."
 pip install -e .
 
-print_success "Instal·lació completada!"
+print_success "Installation complete!"
 
-# Configuració inicial
-print_info "Configurant aplicació..."
+# Initial configuration
+print_info "Configuring the application..."
 
-# Copia fitxers d'exemple si no existeixen
+# Copy the example files if they do not exist yet
 if [ ! -f ".env" ]; then
     cp ".env.example" ".env"
-    print_info "Fitxer .env creat des de l'exemple"
+    print_info "Created the .env file from the example"
 fi
 
 if [ ! -f "encryption_keys.json" ]; then
     cp "encryption_keys.json.example" "encryption_keys.json"
-    print_info "Fitxer encryption_keys.json creat des de l'exemple"
+    print_info "Created the encryption_keys.json file from the example"
 fi
 
-print_warning "IMPORTANT: Configura els fitxers .env i encryption_keys.json amb les teves dades"
+print_warning "IMPORTANT: Fill in the .env and encryption_keys.json files with your own settings"
 
-# Ofereix crear servei systemd
+# Offer to create a systemd service
 echo
-read -p "Vols crear un servei systemd per executar automàticament? (y/N): " -n 1 -r
+read -p "Do you want to create a systemd service to run it automatically? (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    print_info "Creant servei systemd..."
+    print_info "Creating the systemd service..."
     
-    # Demana configuració
-    read -p "Introdueix l'adreça MAC del dispositiu Bluetti: " MAC_ADDRESS
-    read -p "Introdueix l'adreça del broker MQTT: " MQTT_BROKER
+    # Ask for the settings
+    read -p "Enter the MAC address of the Bluetti device: " MAC_ADDRESS
+    read -p "Enter the address of the MQTT broker: " MQTT_BROKER
     
-    # Crea fitxer de servei
+    # Create the service file
     sudo tee "/etc/systemd/system/$SERVICE_NAME.service" > /dev/null <<EOF
 [Unit]
 Description=Bluetti Elite 200 V2 MQTT Bridge
@@ -138,33 +138,33 @@ Environment=PATH=$VENV_DIR/bin
 WantedBy=multi-user.target
 EOF
 
-    # Recarrega systemd i habilita servei
+    # Reload systemd and enable the service
     sudo systemctl daemon-reload
     sudo systemctl enable "$SERVICE_NAME"
     
-    print_success "Servei systemd creat i habilitat"
-    print_info "Pots iniciar el servei amb: sudo systemctl start $SERVICE_NAME"
-    print_info "Veure logs amb: sudo journalctl -u $SERVICE_NAME -f"
+    print_success "systemd service created and enabled"
+    print_info "You can start the service with: sudo systemctl start $SERVICE_NAME"
+    print_info "View the logs with: sudo journalctl -u $SERVICE_NAME -f"
 fi
 
-# Mostra informació final
+# Show the final information
 echo
-print_success "🎉 Instal·lació completada!"
+print_success "🎉 Installation complete!"
 echo
-print_info "Passos següents:"
-echo "1. Edita $INSTALL_DIR/.env amb la configuració MQTT"
-echo "2. Configura $INSTALL_DIR/encryption_keys.json amb les claus del dispositiu"
-echo "3. Prova la connexió: cd $INSTALL_DIR && $VENV_DIR/bin/python tools/test_connection.py"
-echo "4. Executa l'aplicació: cd $INSTALL_DIR && $VENV_DIR/bin/python -m bluetti_mqtt.server_cli --broker [MQTT_HOST] [MAC_ADDRESS]"
+print_info "Next steps:"
+echo "1. Edit $INSTALL_DIR/.env with your MQTT configuration"
+echo "2. Set up $INSTALL_DIR/encryption_keys.json with the device keys"
+echo "3. Test the connection: cd $INSTALL_DIR && $VENV_DIR/bin/python tools/test_connection.py"
+echo "4. Run the application: cd $INSTALL_DIR && $VENV_DIR/bin/python -m bluetti_mqtt.server_cli --broker [MQTT_HOST] [MAC_ADDRESS]"
 echo
-print_info "Documentació completa: $INSTALL_DIR/README.md"
-print_info "Eines d'ajuda disponibles a: $INSTALL_DIR/tools/"
+print_info "Full documentation: $INSTALL_DIR/README.md"
+print_info "Helper tools available in: $INSTALL_DIR/tools/"
 
 if command -v systemctl &> /dev/null && systemctl is-enabled "$SERVICE_NAME" &> /dev/null; then
     echo
-    print_info "Servei systemd configurat. Comandes útils:"
-    echo "  sudo systemctl start $SERVICE_NAME    # Inicia el servei"
-    echo "  sudo systemctl stop $SERVICE_NAME     # Para el servei"
-    echo "  sudo systemctl status $SERVICE_NAME   # Estat del servei"
-    echo "  sudo journalctl -u $SERVICE_NAME -f   # Veure logs en temps real"
+    print_info "systemd service configured. Useful commands:"
+    echo "  sudo systemctl start $SERVICE_NAME    # Start the service"
+    echo "  sudo systemctl stop $SERVICE_NAME     # Stop the service"
+    echo "  sudo systemctl status $SERVICE_NAME   # Service status"
+    echo "  sudo journalctl -u $SERVICE_NAME -f   # View logs in real time"
 fi

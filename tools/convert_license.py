@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Converteix un fitxer de llicència Bluetti (CSV) al format JSON necessari
-per a l'aplicació MQTT.
+Converts a Bluetti license file (CSV) into the JSON format required
+by the MQTT application.
 
-Ús: python convert_license.py bluetti_device_licence.csv [MAC_ADDRESS]
+Usage: python convert_license.py bluetti_device_licence.csv [MAC_ADDRESS]
 """
 
 import sys
@@ -12,101 +12,101 @@ import os
 
 def convert_license_to_json(license_file, mac_address=None, output_file="encryption_keys.json"):
     """
-    Converteix un fitxer de llicència CSV al format JSON
+    Converts a CSV license file into the JSON format
     
     Args:
-        license_file: Ruta al fitxer de llicència CSV
-        mac_address: Adreça MAC del dispositiu (opcional)
-        output_file: Fitxer de sortida JSON
+        license_file: Path to the CSV license file
+        mac_address: MAC address of the device (optional)
+        output_file: JSON output file
     """
     
     try:
-        # Llegeix i normalitza (ignorem línies buides)
+        # Read and normalise (blank lines are ignored)
         with open(license_file, 'r') as f:
             raw_lines = [l.strip() for l in f.readlines()]
 
         lines = [l for l in raw_lines if l]
 
-        # Formats acceptats (després de filtrar buides):
-        # 4 línies: bluetti, timestamp, md5_key, encryption_key
-        # 5+ línies: (legacy) bluetti pot anar precedit d'una línia buida en l'arxiu original
+        # Accepted formats (after filtering out blank lines):
+        # 4 lines: bluetti, timestamp, md5_key, encryption_key
+        # 5+ lines: (legacy) bluetti may be preceded by a blank line in the original file
         if len(lines) < 4:
-            print("❌ Error: El fitxer de llicència no té el format mínim (4 línies no buides)")
-            print("   Format esperat simplificat:")
+            print("❌ Error: The license file does not meet the minimum format (4 non-empty lines)")
+            print("   Simplified expected format:")
             print("     1: bluetti")
             print("     2: timestamp")
-            print("     3: clau MD5")
-            print("     4: clau d'encriptació")
+            print("     3: MD5 key")
+            print("     4: encryption key")
             return False
 
-        # Si hi hagués més línies, agafem les primeres vàlides en ordre
-        # (això dóna tolerància a formats futurs amb metadades extra)
+        # If there are more lines, take the first valid ones in order
+        # (this gives tolerance for future formats with extra metadata)
         bluetti_marker = lines[0].lower()
         if bluetti_marker != 'bluetti':
-            # Algunes variants poden tenir primera línia tipus BOM o text; intentem localitzar 'bluetti'
+            # Some variants may have a first line with a BOM or text; try to locate 'bluetti'
             try:
                 idx = [i for i, v in enumerate(lines) if v.lower() == 'bluetti'][0]
                 lines = lines[idx:]
                 if len(lines) < 4:
-                    raise ValueError("No hi ha prou línies després del marcador bluetti")
+                    raise ValueError("Not enough lines after the bluetti marker")
             except Exception:
-                print("❌ Error: No s'ha trobat el marcador 'bluetti' a la primera línia")
+                print("❌ Error: The 'bluetti' marker was not found on the first line")
                 return False
 
         timestamp = lines[1].strip()
         md5_key = lines[2].strip()
         encryption_key = lines[3].strip()
         
-        print(f"📄 Processant fitxer de llicència:")
+        print(f"📄 Processing license file:")
         print(f"   Timestamp: {timestamp}")
         print(f"   MD5 Key: {md5_key[:16]}...{md5_key[-16:]}")
         print(f"   Encryption Key: {encryption_key[:32]}...{encryption_key[-32:]}")
         
-        # Si no s'ha proporcionat MAC, demana-la
+        # If no MAC was provided, ask for it
         if not mac_address:
-            mac_address = input("\n🔍 Introdueix l'adreça MAC del dispositiu (XX:XX:XX:XX:XX:XX): ").strip()
+            mac_address = input("\n🔍 Enter the device MAC address (XX:XX:XX:XX:XX:XX): ").strip()
         
-        # Valida el format de la MAC
+        # Validate the MAC format
         if not validate_mac_address(mac_address):
-            print("❌ Error: Format d'adreça MAC invàlid")
+            print("❌ Error: Invalid MAC address format")
             return False
         
-        # Crea l'estructura JSON
-        # Nota: Utilitzem la clau MD5 com a 'key' i la clau d'encriptació com a 'token'
-        # Aquest mapatge pot necessitar ajustos segons el protocol específic
+        # Build the JSON structure
+        # Note: We use the MD5 key as 'key' and the encryption key as 'token'
+        # This mapping may need adjustments depending on the specific protocol
         encryption_data = {
             mac_address: {
-                "pin": "000000",  # PIN per defecte
+                "pin": "000000",  # Default PIN
                 "key": md5_key,
                 "token": encryption_key
             }
         }
         
-        # Guarda el fitxer JSON
+        # Save the JSON file
         with open(output_file, 'w') as f:
             json.dump(encryption_data, f, indent=2)
         
-        print(f"\n✅ Conversió completada!")
-        print(f"   Fitxer generat: {output_file}")
-        print(f"   Dispositiu: {mac_address}")
+        print(f"\n✅ Conversion completed!")
+        print(f"   Generated file: {output_file}")
+        print(f"   Device: {mac_address}")
         
-        # Mostra instruccions
-        print(f"\n📋 Instruccions:")
-        print(f"   1. Copia el fitxer {output_file} al directori arrel del projecte")
-        print(f"   2. Actualitza el fitxer .env amb BLUETTI_MAC={mac_address}")
-        print(f"   3. Executa python tools/verify_keys.py per verificar les claus")
+        # Show instructions
+        print(f"\n📋 Instructions:")
+        print(f"   1. Copy the file {output_file} to the project root directory")
+        print(f"   2. Update the .env file with BLUETTI_MAC={mac_address}")
+        print(f"   3. Run python tools/verify_keys.py to verify the keys")
         
         return True
         
     except FileNotFoundError:
-        print(f"❌ Error: No s'ha trobat el fitxer {license_file}")
+        print(f"❌ Error: File not found: {license_file}")
         return False
     except Exception as e:
-        print(f"❌ Error processant el fitxer: {e}")
+        print(f"❌ Error processing the file: {e}")
         return False
 
 def validate_mac_address(mac):
-    """Valida el format d'una adreça MAC"""
+    """Validates the format of a MAC address"""
     if not mac:
         return False
     
@@ -126,9 +126,9 @@ def validate_mac_address(mac):
 
 def main():
     if len(sys.argv) < 2:
-        print("Ús: python convert_license.py <fitxer_llicencia.csv> [MAC_ADDRESS]")
+        print("Usage: python convert_license.py <license_file.csv> [MAC_ADDRESS]")
         print()
-        print("Exemple:")
+        print("Example:")
         print("  python convert_license.py bluetti_device_licence.csv")
         print("  python convert_license.py bluetti_device_licence.csv E4:B3:23:5B:F5:76")
         sys.exit(1)
@@ -136,7 +136,7 @@ def main():
     license_file = sys.argv[1]
     mac_address = sys.argv[2] if len(sys.argv) > 2 else None
     
-    print("🔧 Convertidor de llicència Bluetti a JSON")
+    print("🔧 Bluetti license to JSON converter")
     print("=" * 50)
     
     if convert_license_to_json(license_file, mac_address):

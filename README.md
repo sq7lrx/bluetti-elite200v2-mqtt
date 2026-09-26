@@ -5,81 +5,81 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-Aquest projecte proporciona una interfície MQTT per a l'estació de càrrega Bluetti Elite 200 V2, permetent llegir dades del dispositiu via Bluetooth i publicar-les a un broker MQTT per a la seva integració amb sistemes de domòtica com Home Assistant.
+This project provides an MQTT interface for the Bluetti Elite 200 V2 power station, allowing you to read data from the device over Bluetooth and publish it to an MQTT broker for integration with home automation systems such as Home Assistant.
 
-## Agraïments
+## Acknowledgements
 
-Aquest repositori s'ha creat gràcies al treball excepcional de [warhammerkid](https://github.com/warhammerkid) i el seu projecte [bluetti_mqtt](https://github.com/warhammerkid/bluetti_mqtt). Li agraeixo molt la seva feina, que ha fet possible aquesta adaptació específica per a la Bluetti Elite 200 V2. El codi original ha servit com a base sòlida per desenvolupar aquesta versió especialitzada.
+This repository was created thanks to the outstanding work of [warhammerkid](https://github.com/warhammerkid) and his project [bluetti_mqtt](https://github.com/warhammerkid/bluetti_mqtt). I am very grateful for his work, which made this specific adaptation for the Bluetti Elite 200 V2 possible. The original code has served as a solid foundation for developing this specialised version.
 
-## Característiques
+## Features
 
-- ✅ Connexió Bluetooth amb l'estació Bluetti Elite 200 V2
-- ✅ Publicació de dades a MQTT
-- ✅ Suport per a encriptació Bluetooth
-- ✅ Integració automàtica amb Home Assistant
-- ✅ Monitorització contínua de l'estat del dispositiu
-- ✅ Suport per a múltiples dispositius simultàniament
+- ✅ Bluetooth connection to the Bluetti Elite 200 V2 power station
+- ✅ Data publishing to MQTT
+- ✅ Bluetooth encryption support
+- ✅ Automatic Home Assistant integration
+- ✅ Continuous monitoring of the device status
+- ✅ Support for multiple devices simultaneously
 
-## Requisits
+## Requirements
 
-- Python 3.7 o superior
-- Adaptador Bluetooth compatible amb BLE
-- Broker MQTT (com Mosquitto)
-- Estació de càrrega Bluetti Elite 200 V2
+- Python 3.7 or later
+- BLE-compatible Bluetooth adapter
+- MQTT broker (such as Mosquitto)
+- Bluetti Elite 200 V2 power station
 
-## Instal·lació
+## Installation
 
-### 1. Clona el repositori
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt.git
 cd bluetti-elite200v2-mqtt
 ```
 
-### 2. Crea un entorn virtual
+### 2. Create a virtual environment
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # Linux/Mac
-# o
+# or
 venv\Scripts\activate     # Windows
 ```
 
-### 3. Instal·la les dependències
+### 3. Install the dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configura l'aplicació
+### 4. Configure the application
 
-Copia el fitxer d'exemple de configuració:
+Copy the example configuration file:
 
 ```bash
 cp .env.example .env
 ```
 
-Edita el fitxer `.env` amb la teva configuració:
+Edit the `.env` file with your settings:
 
 ```bash
-# Configuració del dispositiu Bluetti
+# Bluetti device settings
 BLUETTI_MAC=XX:XX:XX:XX:XX:XX
 ENCRYPTION_KEY_FILE=encryption_keys.json
 
-# Configuració MQTT
+# MQTT settings
 MQTT_HOST=192.168.1.100
 MQTT_PORT=1883
 MQTT_USERNAME=mqttuser
 MQTT_PASSWORD=mqttpass
 MQTT_TOPIC=bluetti
 
-# Configuració de logging
+# Logging settings
 LOG_LEVEL=info
 ```
 
-## Execució amb Docker
+## Running with Docker
 
-Si prefereixes utilitzar el contenidor publicat a GHCR, pots fer-ho de forma molt senzilla. El contenidor necessita accés al socket de D-Bus del sistema per parlar amb BlueZ (Bluetooth) i la xarxa en mode host per simplificar la descoberta i evitar problemes de ports.
+If you prefer to use the container published on GHCR, you can do so very easily. The container needs access to the system D-Bus socket to talk to BlueZ (Bluetooth) and host networking to simplify discovery and avoid port issues.
 
 ### `docker run`
 
@@ -93,15 +93,15 @@ docker run -d \
    -e BLUETTI_MAC=XX:XX:XX:XX:XX:XX \
    -e MQTT_HOST=192.168.1.100 \
    -e MQTT_PORT=1883 \
-   -e MQTT_USERNAME=usuari \
-   -e MQTT_PASSWORD=contrasenya \
+   -e MQTT_USERNAME=user \
+   -e MQTT_PASSWORD=password \
    -e MQTT_TOPIC=bluetti \
    -e LOG_LEVEL=info \
    -e ENCRYPTION_KEY_FILE=/app/config/encryption_keys.json \
    ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest
 ```
 
-### `docker-compose.yml` d'exemple
+### Example `docker-compose.yml`
 
 ```yaml
 services:
@@ -111,11 +111,11 @@ services:
       network_mode: host
       restart: unless-stopped
       environment:
-         BLUETTI_MAC: "XX:XX:XX:XX:XX:XX"  # Substitueix per la MAC real
+         BLUETTI_MAC: "XX:XX:XX:XX:XX:XX"  # Replace with the real MAC
          MQTT_HOST: "192.168.1.100"
          MQTT_PORT: "1883"
-         MQTT_USERNAME: "usuari"
-         MQTT_PASSWORD: "contrasenya"
+         MQTT_USERNAME: "user"
+         MQTT_PASSWORD: "password"
          MQTT_TOPIC: "bluetti"
          LOG_LEVEL: "info"
          ENCRYPTION_KEY_FILE: "/app/config/encryption_keys.json"
@@ -125,115 +125,115 @@ services:
          - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
 ```
 
-Després només cal executar:
+Then you just need to run:
 
 ```bash
 
 ```
 
-### Notes de seguretat
-- No posis credencials sensibles al repositori; utilitza un fitxer `.env` local o un secret manager si cal.
-- El mode `host` és el més senzill per BLE + MQTT local. Si vols restringir-lo, pots provar `network_mode: bridge` i exposar només els ports MQTT si algun dia el contenidor actués de broker (ara no cal).
-- El socket D-Bus es munta en mode lectura (`:ro`).
+### Security notes
+- Do not put sensitive credentials in the repository; use a local `.env` file or a secret manager if needed.
+- The `host` mode is the simplest option for BLE + local MQTT. If you want to restrict it, you can try `network_mode: bridge` and expose only the MQTT ports if the container ever acts as a broker (not needed for now).
+- The D-Bus socket is mounted read-only (`:ro`).
 
-### Actualització de la imatge
+### Updating the image
 
 ```bash
-## Configuració
+## Configuration
 docker compose up -d --force-recreate
 ```
 
-Per fixar una versió exacta, substitueix `:latest` pel digest:
+To pin an exact version, replace `:latest` with the digest:
 
 ```bash
 image: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt@sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 
-### Obtenció de l'adreça MAC del dispositiu
+### Finding the device MAC address
 
-Per trobar l'adreça MAC del teu dispositiu Bluetti:
+To find your Bluetti device's MAC address:
 
 ```bash
 python -m bluetti_mqtt.discovery_cli --scan
 ```
 
-Això mostrarà tots els dispositius Bluetti disponibles:
+This will show all available Bluetti devices:
 
 ```
 Found AC3001234567890123: address XX:XX:XX:XX:XX:XX
 ```
 
-### Configuració de les claus d'encriptació
+### Configuring the encryption keys
 
-**IMPORTANT**: Per a la seguretat del teu dispositiu, necessitaràs obtenir les claus d'encriptació específiques del teu dispositiu Bluetti Elite 200 V2. Aquestes claus són úniques per a cada dispositiu i són necessàries per establir una comunicació segura.
+**IMPORTANT**: For the security of your device, you will need to obtain the encryption keys specific to your Bluetti Elite 200 V2. These keys are unique to each device and are required to establish secure communication.
 
-#### Mètode 1: Utilitzant el mòdul oficial de criptografia Bluetti
+#### Method 1: Using the official Bluetti cryptography module
 
-Aquest és el mètode recomanat i més segur:
+This is the recommended and safest method:
 
-1. **Descarrega el mòdul oficial**:
-   - Visita el lloc web oficial de Bluetti
-   - Cerca "Bluetti Crypt Module Linux" o contacta amb el suport tècnic
-   - Descarrega el fitxer `Bluetti_Crypt_Module_Linux-X.X.X.tar.gz`
+1. **Download the official module**:
+   - Visit the official Bluetti website
+   - Search for "Bluetti Crypt Module Linux" or contact technical support
+   - Download the `Bluetti_Crypt_Module_Linux-X.X.X.tar.gz` file
 
-2. **Extreu i instal·la el mòdul**:
+2. **Extract and install the module**:
    ```bash
    tar -xzf Bluetti_Crypt_Module_Linux-X.X.X.tar.gz
-   # Segueix les instruccions d'instal·lació del mòdul
+   # Follow the module's installation instructions
    ```
 
-3. **Genera les claus del teu dispositiu**:
-   - Utilitza les eines proporcionades pel mòdul oficial
-   - Connecta't al teu dispositiu Elite 200 V2
-   - Executa el procés d'autenticació per obtenir les claus
+3. **Generate your device's keys**:
+   - Use the tools provided by the official module
+   - Connect to your Elite 200 V2 device
+   - Run the authentication process to obtain the keys
 
-#### Mètode 2: Captura de tràfic Bluetooth (Avançat)
+#### Method 2: Bluetooth traffic capture (Advanced)
 
-**Advertència**: Aquest mètode requereix coneixements tècnics avançats i pot ser complex.
+**Warning**: This method requires advanced technical knowledge and can be complex.
 
-##### Per a Android:
-1. **Habilita el logging Bluetooth**:
-   - Vés a `Configuració > Opcions de desenvolupador`
-   - Activa "Registre HCI Bluetooth"
+##### For Android:
+1. **Enable Bluetooth logging**:
+   - Go to `Settings > Developer options`
+   - Enable "Bluetooth HCI snoop log"
 
-2. **Captura el tràfic**:
-   - Instal·la l'aplicació oficial Bluetti
-   - Connecta't al teu dispositiu Elite 200 V2
-   - Realitza algunes operacions (llegir estat, canviar configuració)
-   - El log es guardarà a `/sdcard/btsnoop_hci.log`
+2. **Capture the traffic**:
+   - Install the official Bluetti app
+   - Connect to your Elite 200 V2 device
+   - Perform some operations (read status, change settings)
+   - The log will be saved to `/sdcard/btsnoop_hci.log`
 
-3. **Analitza el tràfic**:
-   - Transfereix el fitxer `btsnoop_hci.log` al teu ordinador
-   - Utilitza Wireshark per obrir i analitzar el fitxer
-   - Cerca els paquets d'autenticació i handshake
-   - Extreu les claus d'encriptació dels paquets capturats
+3. **Analyse the traffic**:
+   - Transfer the `btsnoop_hci.log` file to your computer
+   - Use Wireshark to open and analyse the file
+   - Look for the authentication and handshake packets
+   - Extract the encryption keys from the captured packets
 
-##### Per a iOS:
-1. **Configura el dispositiu per a desenvolupament**:
-   - Necessitaràs un compte de desenvolupador d'Apple
-   - Instal·la el perfil de configuració per a logging Bluetooth
+##### For iOS:
+1. **Set up the device for development**:
+   - You will need an Apple developer account
+   - Install the configuration profile for Bluetooth logging
 
-2. **Captura i analitza**:
-   - Similar al procés d'Android però utilitzant les eines d'Apple
+2. **Capture and analyse**:
+   - Similar to the Android process, but using Apple's tools
 
-#### Mètode 3: Enginyeria inversa del firmware (Molt avançat)
+#### Method 3: Firmware reverse engineering (Very advanced)
 
-**Advertència**: Aquest mètode és només per a experts i pot invalidar la garantia.
+**Warning**: This method is for experts only and may void the warranty.
 
-1. **Extracció del firmware**:
-   - Desmunta el dispositiu (invalida la garantia)
-   - Connecta't al chip de memòria flash
-   - Extreu el firmware utilitzant eines especialitzades
+1. **Firmware extraction**:
+   - Disassemble the device (voids the warranty)
+   - Connect to the flash memory chip
+   - Extract the firmware using specialised tools
 
-2. **Anàlisi del firmware**:
-   - Utilitza eines com Ghidra, IDA Pro o Radare2
-   - Cerca les funcions de criptografia i autenticació
-   - Extreu les claus hardcoded o l'algoritme de generació
+2. **Firmware analysis**:
+   - Use tools such as Ghidra, IDA Pro or Radare2
+   - Look for the cryptography and authentication functions
+   - Extract the hardcoded keys or the generation algorithm
 
-#### Format del fitxer encryption_keys.json
+#### encryption_keys.json file format
 
-Un cop obtinguis les claus, crea el fitxer `encryption_keys.json` amb aquest format:
+Once you have obtained the keys, create the `encryption_keys.json` file with this format:
 
 ```json
 {
@@ -245,57 +245,57 @@ Un cop obtinguis les claus, crea el fitxer `encryption_keys.json` amb aquest for
 }
 ```
 
-On:
-- `XX:XX:XX:XX:XX:XX`: L'adreça MAC del teu dispositiu
-- `pin`: El PIN del dispositiu (normalment "000000" per defecte)
-- `key`: Clau d'encriptació de 32 caràcters hexadecimals (16 bytes)
-- `token`: Token d'autenticació de 64+ caràcters hexadecimals
+Where:
+- `XX:XX:XX:XX:XX:XX`: Your device's MAC address
+- `pin`: The device PIN (usually "000000" by default)
+- `key`: 32-character hexadecimal encryption key (16 bytes)
+- `token`: Authentication token of 64+ hexadecimal characters
 
-#### Verificació de les claus
+#### Verifying the keys
 
-Per verificar que les claus són correctes, pots utilitzar l'eina de test inclosa:
+To check that the keys are correct, you can use the included test tool:
 
 ```bash
 python test_encryption.py
 ```
 
-Si les claus són correctes, hauràs de veure missatges com:
+If the keys are correct, you should see messages such as:
 ```
-✅ Connexió establerta correctament
-✅ Autenticació exitosa
-✅ Dades desencriptades correctament
+✅ Connection established successfully
+✅ Authentication successful
+✅ Data decrypted successfully
 ```
 
-#### Resolució de problemes amb les claus
+#### Troubleshooting the keys
 
 **Error: "Authentication failed"**
-- Verifica que l'adreça MAC sigui correcta
-- Comprova que el PIN sigui correcte
-- Assegura't que la clau tingui exactament 32 caràcters hexadecimals
+- Check that the MAC address is correct
+- Check that the PIN is correct
+- Make sure the key is exactly 32 hexadecimal characters
 
 **Error: "Decryption failed"**
-- Verifica que el token sigui correcte i complet
-- Comprova que no hi hagi espais o caràcters extra
-- Assegura't que el token estigui en format hexadecimal
+- Check that the token is correct and complete
+- Check that there are no extra spaces or characters
+- Make sure the token is in hexadecimal format
 
 **Error: "Device not found"**
-- Verifica que el dispositiu estigui encès i a prop
-- Comprova que no hi hagi altres aplicacions connectades
-- Reinicia el Bluetooth del sistema
+- Check that the device is switched on and nearby
+- Check that no other applications are connected
+- Restart the system's Bluetooth
 
-**Nota important**: Les claus mostrades en aquest exemple són fictícies. Cada dispositiu Bluetti té les seves pròpies claus úniques que has d'obtenir seguint un dels mètodes descrits anteriorment.
+**Important note**: The keys shown in this example are fictitious. Every Bluetti device has its own unique keys, which you must obtain using one of the methods described above.
 
-#### Obtenció de la llicència del dispositiu (Mètode alternatiu)
+#### Obtaining the device licence (Alternative method)
 
-Si tens accés al mòdul oficial de Bluetti, també pots generar un fitxer de llicència del dispositiu:
+If you have access to the official Bluetti module, you can also generate a device licence file:
 
-1. **Genera la llicència**:
+1. **Generate the licence**:
    ```bash
-   # Utilitzant el mòdul oficial de Bluetti
+   # Using the official Bluetti module
    ./bluetti_license_generator --device [MAC_ADDRESS] --output bluetti_device_licence.csv
    ```
 
-2. **Format del fitxer de llicència**:
+2. **Licence file format**:
    ```
    bluetti
    [TIMESTAMP]
@@ -303,87 +303,87 @@ Si tens accés al mòdul oficial de Bluetti, també pots generar un fitxer de ll
    [ENCRYPTION_KEY]
    ```
 
-   On:
-   - `TIMESTAMP`: Timestamp de generació de la llicència
-   - `MD5_KEY`: Clau MD5 de 32 caràcters hexadecimals
-   - `ENCRYPTION_KEY`: Clau d'encriptació completa (molt llarga)
+   Where:
+   - `TIMESTAMP`: Licence generation timestamp
+   - `MD5_KEY`: 32-character hexadecimal MD5 key
+   - `ENCRYPTION_KEY`: Full encryption key (very long)
 
-3. **Conversió a format JSON**:
-   Si tens el fitxer de llicència, pots convertir-lo al format JSON necessari:
+3. **Conversion to JSON format**:
+   If you have the licence file, you can convert it to the required JSON format:
    ```bash
    python convert_license.py bluetti_device_licence.csv
    ```
 
-#### Eines d'ajuda incloses
+#### Included helper tools
 
-El repositori inclou diverses eines per ajudar-te amb l'obtenció i verificació de les claus:
+The repository includes several tools to help you obtain and verify the keys:
 
-- `tools/extract_keys.py`: Extreu claus des de logs de Bluetooth
-- `tools/verify_keys.py`: Verifica que les claus siguin correctes
-- `tools/convert_license.py`: Converteix fitxers de llicència a format JSON
-- `tools/test_connection.py`: Prova la connexió amb el dispositiu
+- `tools/extract_keys.py`: Extracts keys from Bluetooth logs
+- `tools/verify_keys.py`: Verifies that the keys are correct
+- `tools/convert_license.py`: Converts licence files to JSON format
+- `tools/test_connection.py`: Tests the connection to the device
 
-## Ús
+## Usage
 
-### Execució bàsica
+### Basic execution
 
 ```bash
 python -m bluetti_mqtt.server_cli --broker [MQTT_BROKER_HOST] [MAC_ADDRESS]
 ```
 
-### Amb autenticació MQTT
+### With MQTT authentication
 
 ```bash
 python -m bluetti_mqtt.server_cli --broker [MQTT_BROKER_HOST] --username [USERNAME] --password [PASSWORD] [MAC_ADDRESS]
 ```
 
-### Amb interval de polling personalitzat
+### With a custom polling interval
 
 ```bash
 python -m bluetti_mqtt.server_cli --broker [MQTT_BROKER_HOST] --interval 60 [MAC_ADDRESS]
 ```
 
-### Múltiples dispositius
+### Multiple devices
 
 ```bash
 python -m bluetti_mqtt.server_cli --broker [MQTT_BROKER_HOST] [MAC_ADDRESS_1] [MAC_ADDRESS_2]
 ```
 
-## Integració amb Home Assistant
+## Home Assistant integration
 
-L'aplicació suporta el descobriment automàtic de Home Assistant. Les entitats apareixeran automàticament a Home Assistant si:
+The application supports Home Assistant auto-discovery. The entities will appear automatically in Home Assistant if:
 
-1. Home Assistant està configurat per utilitzar el mateix broker MQTT
-2. El descobriment MQTT està habilitat (per defecte)
+1. Home Assistant is configured to use the same MQTT broker
+2. MQTT discovery is enabled (default)
 
-### Topics MQTT
+### MQTT topics
 
-- **Estat**: `bluetti/state/[DEVICE_NAME]/[PROPERTY]`
-- **Comandes**: `bluetti/command/[DEVICE_NAME]/[PROPERTY]`
-- **Descobriment HA**: `homeassistant/sensor/bluetti_[DEVICE_NAME]/[PROPERTY]/config`
+- **State**: `bluetti/state/[DEVICE_NAME]/[PROPERTY]`
+- **Commands**: `bluetti/command/[DEVICE_NAME]/[PROPERTY]`
+- **HA discovery**: `homeassistant/sensor/bluetti_[DEVICE_NAME]/[PROPERTY]/config`
 
-### Propietats disponibles
+### Available properties
 
-- `battery_percent`: Percentatge de bateria
-- `ac_output_power`: Potència de sortida AC (W)
-- `dc_output_power`: Potència de sortida DC (W)
-- `ac_input_power`: Potència d'entrada AC (W)
-- `dc_input_power`: Potència d'entrada DC (W)
-- `battery_voltage`: Voltatge de la bateria (V)
-- `battery_current`: Corrent de la bateria (A)
-- `temperature`: Temperatura del dispositiu (°C)
+- `battery_percent`: Battery percentage
+- `ac_output_power`: AC output power (W)
+- `dc_output_power`: DC output power (W)
+- `ac_input_power`: AC input power (W)
+- `dc_input_power`: DC input power (W)
+- `battery_voltage`: Battery voltage (V)
+- `battery_current`: Battery current (A)
+- `temperature`: Device temperature (°C)
 
-## Servei del sistema (systemd)
+## System service (systemd)
 
-Per executar l'aplicació com a servei del sistema:
+To run the application as a system service:
 
-1. Crea el fitxer de servei:
+1. Create the service file:
 
 ```bash
 sudo nano /etc/systemd/system/bluetti-mqtt.service
 ```
 
-2. Afegeix el contingut següent:
+2. Add the following content:
 
 ```ini
 [Unit]
@@ -404,7 +404,7 @@ ExecStart=/home/pi/bluetti-elite200v2-mqtt/venv/bin/python -m bluetti_mqtt.serve
 WantedBy=multi-user.target
 ```
 
-3. Habilita i inicia el servei:
+3. Enable and start the service:
 
 ```bash
 sudo systemctl daemon-reload
@@ -412,79 +412,79 @@ sudo systemctl enable bluetti-mqtt
 sudo systemctl start bluetti-mqtt
 ```
 
-## Desenvolupament i Debug
+## Development and debugging
 
-### Logging detallat
+### Verbose logging
 
 ```bash
 python -m bluetti_mqtt.server_cli --broker [MQTT_BROKER_HOST] -v [MAC_ADDRESS]
 ```
 
-### Captura de dades per a anàlisi
+### Data capture for analysis
 
 ```bash
 python -m bluetti_mqtt.logger_cli --log capture.log [MAC_ADDRESS]
 ```
 
-### Descobriment de nous registres
+### Discovering new registers
 
 ```bash
 python -m bluetti_mqtt.discovery_cli --log discovery.log [MAC_ADDRESS]
 ```
 
-## Resolució de problemes
+## Troubleshooting
 
-### El dispositiu no es connecta
+### The device does not connect
 
-1. Verifica que l'adreça MAC sigui correcta
-2. Assegura't que el dispositiu estigui a prop (< 10 metres)
-3. Comprova que no hi hagi altres aplicacions connectades al dispositiu
-4. Verifica les claus d'encriptació
+1. Check that the MAC address is correct
+2. Make sure the device is nearby (< 10 metres)
+3. Check that no other applications are connected to the device
+4. Check the encryption keys
 
-### Errors d'autenticació
+### Authentication errors
 
-1. Verifica el fitxer `encryption_keys.json`
-2. Assegura't que les claus siguin correctes per al teu dispositiu específic
-3. Comprova que el PIN sigui correcte
+1. Check the `encryption_keys.json` file
+2. Make sure the keys are correct for your specific device
+3. Check that the PIN is correct
 
-### Problemes de MQTT
+### MQTT problems
 
-1. Verifica la connectivitat amb el broker MQTT
-2. Comprova les credencials d'autenticació
-3. Verifica els permisos dels topics
+1. Check connectivity with the MQTT broker
+2. Check the authentication credentials
+3. Check the topic permissions
 
-## Contribució
+## Contributing
 
-Les contribucions són benvingudes! Si us plau:
+Contributions are welcome! Please:
 
-1. Fes un fork del projecte
-2. Crea una branca per a la teva funcionalitat
-3. Fes commit dels teus canvis
-4. Fes push a la branca
-5. Obre un Pull Request
+1. Fork the project
+2. Create a branch for your feature
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-## Llicència
+## Licence
 
-Aquest projecte està llicenciat sota la llicència MIT. Veure el fitxer [LICENSE](LICENSE) per a més detalls.
+This project is licensed under the MIT licence. See the [LICENSE](LICENSE) file for more details.
 
-## Agraïments
+## Acknowledgements
 
-- [bluetti_mqtt](https://github.com/warhammerkid/bluetti_mqtt) - Projecte base per a la comunicació amb dispositius Bluetti
-- Comunitat de desenvolupadors de Home Assistant
-- Bluetti per proporcionar el mòdul de criptografia
+- [bluetti_mqtt](https://github.com/warhammerkid/bluetti_mqtt) - Base project for communicating with Bluetti devices
+- The Home Assistant developer community
+- Bluetti for providing the cryptography module
 
-## Avís legal
+## Legal notice
 
-Aquest projecte no està afiliat oficialment amb Bluetti. Utilitza'l sota la teva pròpia responsabilitat. L'ús incorrecte pot afectar la garantia del teu dispositiu.
+This project is not officially affiliated with Bluetti. Use it at your own risk. Improper use may affect your device's warranty.
 
-## Suport
+## Support
 
-Si tens problemes o preguntes:
+If you have problems or questions:
 
-1. Revisa la secció de [Resolució de problemes](#resolució-de-problemes)
-2. Cerca als [Issues](https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt/issues) existents
-3. Crea un nou issue si no trobes solució
+1. Check the [Troubleshooting](#troubleshooting) section
+2. Search the existing [Issues](https://github.com/JordiGrasvi/bluetti-elite200v2-mqtt/issues)
+3. Create a new issue if you cannot find a solution
 
 ---
 
-**Nota important sobre la privacitat**: Aquest README no conté cap dada privada. Totes les claus d'encriptació, adreces MAC i credencials mostrades són exemples i han de ser substituïdes per les teves dades reals.
+**Important note about privacy**: This README does not contain any private data. All encryption keys, MAC addresses and credentials shown are examples and must be replaced with your own real data.

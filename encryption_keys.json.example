@@ -1,7 +1,7 @@
 {
   "XX:XX:XX:XX:XX:XX": {
     "pin": "000000",
-    "key": "clau_encriptacio_32_caracters_hex",
-    "token": "token_autenticacio_64_caracters_hex"
+    "key": "encryption_key_32_hex_characters",
+    "token": "auth_token_64_hex_characters"
   }
 }

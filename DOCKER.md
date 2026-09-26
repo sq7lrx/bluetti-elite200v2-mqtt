@@ -1,108 +1,108 @@
-# Execució amb Docker
+# Running with Docker
 
-Aquest document explica com executar Bluetti Elite 200 V2 MQTT Bridge utilitzant Docker.
+This document explains how to run the Bluetti Elite 200 V2 MQTT Bridge using Docker.
 
-## Requisits
+## Requirements
 
-- Docker i Docker Compose instal·lats
-- Adaptador Bluetooth accessible des del contenidor
-- Fitxer `encryption_keys.json` amb les claus del dispositiu
+- Docker and Docker Compose installed
+- A Bluetooth adapter accessible from the container
+- An `encryption_keys.json` file with the device keys
 
-## Configuració ràpida
+## Quick setup
 
-### Opció A: Imatge pre-construïda (Recomanat)
+### Option A: Pre-built image (Recommended)
 
-Utilitza la imatge oficial des de GitHub Container Registry:
+Use the official image from the GitHub Container Registry:
 
 ```bash
-# Crea directoris necessaris
+# Create the required directories
 mkdir -p config logs
 
-# Copia el fitxer de claus (substitueix per les teves dades reals)
+# Copy the key file (replace with your real data)
 cp encryption_keys.json config/
 
-# Utilitza el docker-compose per a imatge pre-construïda
+# Use the docker-compose file for the pre-built image
 docker-compose -f docker-compose.prebuilt.yml up -d
 
-# Veure logs
+# View logs
 docker-compose -f docker-compose.prebuilt.yml logs -f
 
-# Parar l'aplicació
+# Stop the application
 docker-compose -f docker-compose.prebuilt.yml down
 ```
 
-### Opció B: Construcció local
+### Option B: Local build
 
-Construeix la imatge localment des del codi font:
+Build the image locally from source:
 
 ```bash
-# Crea directoris necessaris
+# Create the required directories
 mkdir -p config logs
 
-# Copia el fitxer de claus
+# Copy the key file
 cp encryption_keys.json config/
 
-# Construeix i executa localment
+# Build and run locally
 docker-compose up -d
 
-# Veure logs
+# View logs
 docker-compose logs -f
 
-# Parar l'aplicació
+# Stop the application
 docker-compose down
 ```
 
-### Configuració de variables d'entorn
+### Environment variable configuration
 
-Edita el fitxer docker-compose corresponent i substitueix:
+Edit the corresponding docker-compose file and replace:
 
 ```yaml
 environment:
-  - BLUETTI_MAC=E4:B3:23:5B:F5:76    # La teva adreça MAC real
-  - MQTT_HOST=192.168.1.100          # La teva IP MQTT real
-  - MQTT_USERNAME=el_teu_usuari      # Si cal autenticació
-  - MQTT_PASSWORD=la_teva_contrasenya # Si cal autenticació
+  - BLUETTI_MAC=E4:B3:23:5B:F5:76    # Your real MAC address
+  - MQTT_HOST=192.168.1.100          # Your real MQTT IP
+  - MQTT_USERNAME=your_username      # If authentication is required
+  - MQTT_PASSWORD=your_password      # If authentication is required
 ```
 
-## Ús avançat
+## Advanced usage
 
-### Descobriment de dispositius
+### Device discovery
 
 ```bash
-# Amb imatge pre-construïda
+# With the pre-built image
 docker-compose -f docker-compose.prebuilt.yml --profile discovery up bluetti-discovery
 
-# Amb construcció local
+# With a local build
 docker-compose --profile discovery up bluetti-discovery
 
-# O directament amb Docker (imatge pre-construïda)
+# Or directly with Docker (pre-built image)
 docker run --rm --privileged --network host \
   -v /var/run/dbus:/var/run/dbus:ro \
   --device /dev/bus/usb:/dev/bus/usb \
   ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest bluetti-discovery
 ```
 
-### Mode logger
+### Logger mode
 
 ```bash
-# Amb imatge pre-construïda
+# With the pre-built image
 docker-compose -f docker-compose.prebuilt.yml --profile logger up bluetti-logger
 
-# Amb construcció local
+# With a local build
 docker-compose --profile logger up bluetti-logger
 ```
 
-### Test de connexió
+### Connection test
 
 ```bash
-# Amb imatge pre-construïda
+# With the pre-built image
 docker run --rm --privileged --network host \
   -v /var/run/dbus:/var/run/dbus:ro \
   --device /dev/bus/usb:/dev/bus/usb \
   -e BLUETTI_MAC=XX:XX:XX:XX:XX:XX \
   ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest test-connection
 
-# Amb imatge local
+# With the local image
 docker run --rm --privileged --network host \
   -v /var/run/dbus:/var/run/dbus:ro \
   --device /dev/bus/usb:/dev/bus/usb \
@@ -110,10 +110,10 @@ docker run --rm --privileged --network host \
   bluetti-elite200v2-mqtt test-connection
 ```
 
-### Verificació de claus
+### Key verification
 
 ```bash
-# Amb imatge pre-construïda
+# With the pre-built image
 docker run --rm --privileged --network host \
   -v ./config:/app/config:ro \
   -v /var/run/dbus:/var/run/dbus:ro \
@@ -121,7 +121,7 @@ docker run --rm --privileged --network host \
   -e BLUETTI_MAC=XX:XX:XX:XX:XX:XX \
   ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt:latest verify-keys
 
-# Amb imatge local
+# With the local image
 docker run --rm --privileged --network host \
   -v ./config:/app/config:ro \
   -v /var/run/dbus:/var/run/dbus:ro \
@@ -130,91 +130,91 @@ docker run --rm --privileged --network host \
   bluetti-elite200v2-mqtt verify-keys
 ```
 
-## Variables d'entorn disponibles
+## Available environment variables
 
-| Variable | Descripció | Per defecte | Obligatori |
+| Variable | Description | Default | Required |
 |----------|------------|-------------|------------|
-| `BLUETTI_MAC` | Adreça MAC del dispositiu | - | ✅ |
-| `MQTT_HOST` | Host del broker MQTT | - | ✅ |
-| `MQTT_PORT` | Port del broker MQTT | 1883 | ❌ |
-| `MQTT_USERNAME` | Usuari MQTT | - | ❌ |
-| `MQTT_PASSWORD` | Contrasenya MQTT | - | ❌ |
-| `MQTT_TOPIC` | Topic base MQTT | bluetti | ❌ |
-| `LOG_LEVEL` | Nivell de logging | info | ❌ |
-| `POLLING_INTERVAL` | Interval de polling (segons) | 5 | ❌ |
-| `HA_CONFIG` | Configuració Home Assistant | normal | ❌ |
-| `VERBOSE` | Logs detallats | false | ❌ |
-| `ENCRYPTION_KEY_FILE` | Ruta al fitxer de claus | /app/config/encryption_keys.json | ❌ |
+| `BLUETTI_MAC` | Device MAC address | - | ✅ |
+| `MQTT_HOST` | MQTT broker host | - | ✅ |
+| `MQTT_PORT` | MQTT broker port | 1883 | ❌ |
+| `MQTT_USERNAME` | MQTT username | - | ❌ |
+| `MQTT_PASSWORD` | MQTT password | - | ❌ |
+| `MQTT_TOPIC` | MQTT base topic | bluetti | ❌ |
+| `LOG_LEVEL` | Logging level | info | ❌ |
+| `POLLING_INTERVAL` | Polling interval (seconds) | 5 | ❌ |
+| `HA_CONFIG` | Home Assistant configuration | normal | ❌ |
+| `VERBOSE` | Detailed logs | false | ❌ |
+| `ENCRYPTION_KEY_FILE` | Path to the key file | /app/config/encryption_keys.json | ❌ |
 
-## Volums
+## Volumes
 
-| Volum local | Volum contenidor | Descripció |
-|-------------|------------------|------------|
-| `./config` | `/app/config` | Fitxers de configuració (encryption_keys.json) |
-| `./logs` | `/app/logs` | Logs de l'aplicació |
+| Local volume | Container volume | Description |
+|-------------|------------------|-------------|
+| `./config` | `/app/config` | Configuration files (encryption_keys.json) |
+| `./logs` | `/app/logs` | Application logs |
 
-## Resolució de problemes
+## Troubleshooting
 
 ### Error: "No such device"
 
 ```bash
-# Verifica que l'adaptador Bluetooth sigui accessible
+# Check that the Bluetooth adapter is accessible
 ls -la /dev/bus/usb/
 
-# Assegura't que el contenidor tingui privilegis
-# privileged: true al docker-compose.yml
+# Make sure the container has privileges
+# privileged: true in docker-compose.yml
 ```
 
-### Error: "Permission denied" per Bluetooth
+### Error: "Permission denied" for Bluetooth
 
 ```bash
-# Afegeix l'usuari al grup bluetooth (host)
+# Add the user to the bluetooth group (host)
 sudo usermod -a -G bluetooth $USER
 
-# Reinicia el servei Docker
+# Restart the Docker service
 sudo systemctl restart docker
 ```
 
 ### Error: "Device not found"
 
 ```bash
-# Verifica que el dispositiu sigui visible
+# Check that the device is visible
 docker run --rm --privileged --network host \
   -v /var/run/dbus:/var/run/dbus:ro \
   --device /dev/bus/usb:/dev/bus/usb \
   bluetti-elite200v2-mqtt bluetti-discovery
 ```
 
-### Logs detallats
+### Detailed logs
 
 ```bash
-# Activa logs detallats
+# Enable detailed logs
 docker-compose exec bluetti-mqtt \
   python -m bluetti_mqtt.server_cli --broker $MQTT_HOST -v $BLUETTI_MAC
 ```
 
-## Construcció personalitzada
+## Custom build
 
 ```bash
-# Construeix la imatge localment
+# Build the image locally
 docker build -t bluetti-elite200v2-mqtt .
 
-# Amb arguments de construcció
+# With build arguments
 docker build --build-arg PYTHON_VERSION=3.11 -t bluetti-elite200v2-mqtt .
 ```
 
-## Integració amb altres serveis
+## Integration with other services
 
-### Amb Home Assistant (Docker)
+### With Home Assistant (Docker)
 
 ```yaml
-# Afegeix al teu docker-compose.yml de Home Assistant
+# Add this to your Home Assistant docker-compose.yml
 services:
   homeassistant:
-    # ... configuració existent
+    # ... existing configuration
     
   mosquitto:
-    # ... configuració MQTT
+    # ... MQTT configuration
     
   bluetti-mqtt:
     image: bluetti-elite200v2-mqtt
@@ -222,19 +222,19 @@ services:
       - mosquitto
     environment:
       - MQTT_HOST=mosquitto
-    # ... resta de configuració
+    # ... rest of the configuration
 ```
 
-### Amb Portainer
+### With Portainer
 
-1. Importa el `docker-compose.yml` a Portainer
-2. Configura les variables d'entorn a la interfície web
-3. Munta els volums necessaris
-4. Executa el stack
+1. Import the `docker-compose.yml` into Portainer
+2. Configure the environment variables in the web interface
+3. Mount the required volumes
+4. Run the stack
 
-## Seguretat
+## Security
 
-- **Mai** incloguis claus reals als fitxers de configuració del repositori
-- Utilitza secrets de Docker per a dades sensibles en producció
-- Limita l'accés als volums de configuració
-- Considera utilitzar un usuari no-root dins del contenidor (ja configurat)
+- **Never** include real keys in the repository's configuration files
+- Use Docker secrets for sensitive data in production
+- Restrict access to the configuration volumes
+- Consider using a non-root user inside the container (already configured)

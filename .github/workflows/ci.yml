@@ -123,7 +123,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v4
       with:
-        # Forcem nom d'imatge en minúscules explícit per evitar discrepàncies amb GHCR
+        # Force an explicit lowercase image name to avoid mismatches with GHCR
         images: ghcr.io/jordigrasvi/bluetti-elite200v2-mqtt
         tags: |
           type=ref,event=branch

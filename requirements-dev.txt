@@ -1,4 +1,4 @@
-# Dependències de desenvolupament
+# Development dependencies
 pytest>=7.0.0
 pytest-cov>=4.0.0
 pytest-asyncio>=0.21.0
@@ -10,10 +10,10 @@ bandit>=1.7.0
 safety>=2.0.0
 pre-commit>=2.20.0
 
-# Eines per a debugging
+# Debugging tools
 ipdb>=0.13.0
 pdbpp>=0.10.0
 
-# Documentació
+# Documentation
 sphinx>=5.0.0
 sphinx-rtd-theme>=1.0.0

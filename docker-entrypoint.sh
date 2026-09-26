@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Script d'entrada per al contenidor Docker
+# Entrypoint script for the Docker container
 
 set -e
 
-# Funcions d'utilitat
+# Utility functions
 log_info() {
     echo "[INFO] $1"
 }
@@ -17,25 +17,25 @@ log_warning() {
     echo "[WARNING] $1" >&2
 }
 
-# Verifica variables d'entorn obligatòries
+# Check the required environment variables
 if [ -z "$BLUETTI_MAC" ]; then
-    log_error "BLUETTI_MAC no està definit"
+    log_error "BLUETTI_MAC is not set"
     exit 1
 fi
 
 if [ -z "$MQTT_HOST" ]; then
-    log_error "MQTT_HOST no està definit"
+    log_error "MQTT_HOST is not set"
     exit 1
 fi
 
-# Verifica que el fitxer de claus existeixi
+# Check that the key file exists
 if [ ! -f "$ENCRYPTION_KEY_FILE" ]; then
-    log_error "Fitxer de claus d'encriptació no trobat: $ENCRYPTION_KEY_FILE"
-    log_error "Munta un volum amb el fitxer encryption_keys.json a /app/config/"
+    log_error "Encryption key file not found: $ENCRYPTION_KEY_FILE"
+    log_error "Mount a volume with the encryption_keys.json file at /app/config/"
     exit 1
 fi
 
-# Construeix arguments de la comanda
+# Build the command arguments
 ARGS="--broker $MQTT_HOST"
 
 if [ -n "$MQTT_PORT" ] && [ "$MQTT_PORT" != "1883" ]; then
@@ -62,45 +62,45 @@ if [ "$VERBOSE" = "true" ]; then
     ARGS="$ARGS -v"
 fi
 
-# Afegeix l'adreça MAC
+# Append the MAC address
 ARGS="$ARGS $BLUETTI_MAC"
 
-log_info "Iniciant Bluetti MQTT Bridge..."
+log_info "Starting the Bluetti MQTT Bridge..."
 log_info "MAC: $BLUETTI_MAC"
 log_info "MQTT Host: $MQTT_HOST:$MQTT_PORT"
 log_info "Encryption Keys: $ENCRYPTION_KEY_FILE"
 
-# Executa la comanda segons el primer argument
+# Run the command matching the first argument
 case "$1" in
     bluetti-mqtt)
-        log_info "Executant: python -m bluetti_mqtt.server_cli $ARGS"
+        log_info "Running: python -m bluetti_mqtt.server_cli $ARGS"
         exec python -m bluetti_mqtt.server_cli $ARGS
         ;;
     bluetti-discovery)
-        log_info "Executant descobriment de dispositius..."
+        log_info "Running device discovery..."
         exec python -m bluetti_mqtt.discovery_cli --scan
         ;;
     bluetti-logger)
         if [ -z "$LOG_FILE" ]; then
             LOG_FILE="/app/logs/bluetti.log"
         fi
-        log_info "Executant logger: $LOG_FILE"
+        log_info "Running the logger: $LOG_FILE"
         exec python -m bluetti_mqtt.logger_cli --log "$LOG_FILE" "$BLUETTI_MAC"
         ;;
     test-connection)
-        log_info "Provant connexió amb el dispositiu..."
+        log_info "Testing the connection to the device..."
         exec python /app/tools/test_connection.py "$BLUETTI_MAC"
         ;;
     verify-keys)
-        log_info "Verificant claus d'encriptació..."
+        log_info "Verifying the encryption keys..."
         exec python /app/tools/verify_keys.py "$BLUETTI_MAC"
         ;;
     bash|sh)
-        log_info "Iniciant shell interactiu..."
+        log_info "Starting an interactive shell..."
         exec "$@"
         ;;
     *)
-        log_info "Executant comanda personalitzada: $@"
+        log_info "Running custom command: $@"
         exec "$@"
         ;;
 esac

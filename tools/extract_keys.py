@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Extreu claus d'encriptació des de logs de Bluetooth capturats.
-Suporta fitxers btsnoop_hci.log d'Android i altres formats.
+Extracts encryption keys from captured Bluetooth logs.
+Supports Android btsnoop_hci.log files and other formats.
 
-Ús: python extract_keys.py <fitxer_log> [MAC_ADDRESS]
+Usage: python extract_keys.py <log_file> [MAC_ADDRESS]
 """
 
 import sys
@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 class BluetoothLogParser:
-    """Parser per a logs de Bluetooth per extreure claus Bluetti"""
+    """Parser for Bluetooth logs to extract Bluetti keys"""
     
     def __init__(self, log_file, target_mac=None):
         self.log_file = log_file
@@ -21,92 +21,92 @@ class BluetoothLogParser:
         self.packets = []
     
     def parse_btsnoop_hci(self):
-        """Parseja un fitxer btsnoop_hci.log d'Android"""
-        print(f"📄 Parseant fitxer btsnoop HCI: {self.log_file}")
+        """Parses an Android btsnoop_hci.log file"""
+        print(f"📄 Parsing btsnoop HCI file: {self.log_file}")
         
         try:
             with open(self.log_file, 'rb') as f:
-                # Llegeix la capçalera btsnoop
+                # Read the btsnoop header
                 header = f.read(16)
                 if header[:8] != b'btsnoop\x00':
-                    print("❌ Error: No és un fitxer btsnoop vàlid")
+                    print("❌ Error: Not a valid btsnoop file")
                     return False
                 
-                print("✅ Fitxer btsnoop vàlid detectat")
+                print("✅ Valid btsnoop file detected")
                 
                 packet_count = 0
                 while True:
-                    # Llegeix la capçalera del paquet
+                    # Read the packet header
                     packet_header = f.read(24)
                     if len(packet_header) < 24:
                         break
                     
-                    # Extreu informació del paquet
+                    # Extract packet information
                     original_length, included_length, flags, drops, timestamp = struct.unpack('>IIIIQ', packet_header)
                     
-                    # Llegeix les dades del paquet
+                    # Read the packet data
                     packet_data = f.read(included_length)
                     if len(packet_data) < included_length:
                         break
                     
                     packet_count += 1
                     
-                    # Analitza el paquet
+                    # Analyse the packet
                     self.analyze_packet(packet_data, packet_count)
                 
-                print(f"✅ Processats {packet_count} paquets")
+                print(f"✅ Processed {packet_count} packets")
                 return True
                 
         except Exception as e:
-            print(f"❌ Error parseant fitxer: {e}")
+            print(f"❌ Error parsing file: {e}")
             return False
     
     def analyze_packet(self, data, packet_num):
-        """Analitza un paquet individual"""
+        """Analyses an individual packet"""
         if len(data) < 4:
             return
         
-        # Cerca patrons típics de Bluetti
+        # Look for typical Bluetti patterns
         hex_data = data.hex()
         
-        # Patró 1: Missatges que comencen amb 2A2A (signatura Bluetti)
+        # Pattern 1: Messages starting with 2A2A (Bluetti signature)
         if '2a2a' in hex_data:
-            print(f"🔋 Paquet {packet_num}: Possible missatge Bluetti trobat")
-            print(f"   Dades: {hex_data}")
+            print(f"🔋 Packet {packet_num}: Possible Bluetti message found")
+            print(f"   Data: {hex_data}")
             self.extract_from_bluetti_message(data, packet_num)
         
-        # Patró 2: Cerca claus hexadecimals llargues
+        # Pattern 2: Look for long hexadecimal keys
         self.search_for_keys(hex_data, packet_num)
     
     def extract_from_bluetti_message(self, data, packet_num):
-        """Extreu informació de missatges Bluetti"""
+        """Extracts information from Bluetti messages"""
         hex_data = data.hex()
         
-        # Cerca el patró 2A2A
+        # Look for the 2A2A pattern
         start_pos = hex_data.find('2a2a')
         if start_pos == -1:
             return
         
-        # Extreu el missatge Bluetti
+        # Extract the Bluetti message
         bluetti_msg = hex_data[start_pos:]
         
         if len(bluetti_msg) >= 8:
-            # Analitza els opcodes
+            # Analyse the opcodes
             opcode1 = bluetti_msg[4:6]
             opcode2 = bluetti_msg[6:8]
             
             print(f"   Opcodes: {opcode1} {opcode2}")
             
-            # Si és un missatge llarg, pot contenir claus
+            # If it is a long message, it may contain keys
             if len(bluetti_msg) > 32:
-                print(f"   Missatge llarg detectat ({len(bluetti_msg)//2} bytes)")
+                print(f"   Long message detected ({len(bluetti_msg)//2} bytes)")
                 
-                # Extreu possibles claus
-                payload = bluetti_msg[8:]  # Salta signatura i opcodes
+                # Extract possible keys
+                payload = bluetti_msg[8:]  # Skip signature and opcodes
                 
-                if len(payload) >= 32:  # Almenys 16 bytes per a una clau
-                    possible_key = payload[:32]  # Primers 16 bytes
-                    print(f"   Possible clau: {possible_key}")
+                if len(payload) >= 32:  # At least 16 bytes for a key
+                    possible_key = payload[:32]  # First 16 bytes
+                    print(f"   Possible key: {possible_key}")
                     
                     self.extracted_keys[f"packet_{packet_num}_key"] = possible_key
                 
@@ -117,32 +117,32 @@ class BluetoothLogParser:
                     self.extracted_keys[f"packet_{packet_num}_token"] = possible_token
     
     def search_for_keys(self, hex_data, packet_num):
-        """Cerca patrons de claus en les dades"""
+        """Looks for key patterns in the data"""
         
-        # Cerca strings hexadecimals de 32 caràcters (16 bytes)
+        # Look for 32-character hexadecimal strings (16 bytes)
         for i in range(0, len(hex_data) - 32, 2):
             candidate = hex_data[i:i+32]
             
-            # Verifica que sigui hexadecimal vàlid
+            # Check that it is valid hexadecimal
             try:
                 int(candidate, 16)
                 
-                # Evita patrons massa repetitius
-                if len(set(candidate)) > 4:  # Almenys 5 caràcters diferents
+                # Avoid overly repetitive patterns
+                if len(set(candidate)) > 4:  # At least 5 different characters
                     if f"key_32_{candidate}" not in self.extracted_keys:
                         self.extracted_keys[f"key_32_{candidate}"] = candidate
                         
             except ValueError:
                 continue
         
-        # Cerca strings hexadecimals de 64+ caràcters
+        # Look for hexadecimal strings of 64+ characters
         for i in range(0, len(hex_data) - 64, 2):
             candidate = hex_data[i:i+64]
             
             try:
                 int(candidate, 16)
                 
-                if len(set(candidate)) > 8:  # Més diversitat per tokens llargs
+                if len(set(candidate)) > 8:  # More diversity for long tokens
                     if f"token_64_{candidate[:16]}" not in self.extracted_keys:
                         self.extracted_keys[f"token_64_{candidate[:16]}"] = candidate
                         
@@ -150,43 +150,43 @@ class BluetoothLogParser:
                 continue
     
     def parse_wireshark_text(self):
-        """Parseja un fitxer de text exportat des de Wireshark"""
-        print(f"📄 Parseant fitxer de text Wireshark: {self.log_file}")
+        """Parses a text file exported from Wireshark"""
+        print(f"📄 Parsing Wireshark text file: {self.log_file}")
         
         try:
             with open(self.log_file, 'r') as f:
                 content = f.read()
             
-            # Cerca línies amb dades hexadecimals
+            # Look for lines with hexadecimal data
             lines = content.split('\n')
             packet_num = 0
             
             for line in lines:
                 line = line.strip()
                 
-                # Cerca línies que semblin dades hex
+                # Look for lines that look like hex data
                 if any(c in line.lower() for c in '0123456789abcdef'):
-                    # Extreu només els caràcters hexadecimals
+                    # Extract only the hexadecimal characters
                     hex_chars = ''.join(c for c in line.lower() if c in '0123456789abcdef')
                     
                     if len(hex_chars) >= 8:
                         packet_num += 1
                         self.analyze_packet(bytes.fromhex(hex_chars), packet_num)
             
-            print(f"✅ Processades {packet_num} línies amb dades")
+            print(f"✅ Processed {packet_num} lines with data")
             return True
             
         except Exception as e:
-            print(f"❌ Error parseant fitxer de text: {e}")
+            print(f"❌ Error parsing text file: {e}")
             return False
     
     def save_extracted_keys(self, output_file="extracted_keys.json"):
-        """Guarda les claus extretes"""
+        """Saves the extracted keys"""
         if not self.extracted_keys:
-            print("⚠️  No s'han extret claus")
+            print("⚠️  No keys were extracted")
             return False
         
-        # Organitza les claus per tipus
+        # Organise the keys by type
         organized_keys = {
             "possible_keys_32": [],
             "possible_tokens_64": [],
@@ -194,7 +194,7 @@ class BluetoothLogParser:
             "raw_extractions": self.extracted_keys
         }
         
-        # Classifica les claus
+        # Classify the keys
         for key_id, value in self.extracted_keys.items():
             if "key_32" in key_id and len(value) == 32:
                 organized_keys["possible_keys_32"].append(value)
@@ -206,56 +206,56 @@ class BluetoothLogParser:
                     "value": value
                 })
         
-        # Elimina duplicats
+        # Remove duplicates
         organized_keys["possible_keys_32"] = list(set(organized_keys["possible_keys_32"]))
         organized_keys["possible_tokens_64"] = list(set(organized_keys["possible_tokens_64"]))
         
-        # Guarda el fitxer
+        # Save the file
         with open(output_file, 'w') as f:
             json.dump(organized_keys, f, indent=2)
         
-        print(f"✅ Claus extretes guardades a {output_file}")
-        print(f"   Claus de 32 chars: {len(organized_keys['possible_keys_32'])}")
-        print(f"   Tokens de 64+ chars: {len(organized_keys['possible_tokens_64'])}")
-        print(f"   Missatges Bluetti: {len(organized_keys['bluetti_messages'])}")
+        print(f"✅ Extracted keys saved to {output_file}")
+        print(f"   32-char keys: {len(organized_keys['possible_keys_32'])}")
+        print(f"   64+ char tokens: {len(organized_keys['possible_tokens_64'])}")
+        print(f"   Bluetti messages: {len(organized_keys['bluetti_messages'])}")
         
-        # Mostra les millors candidates
+        # Show the best candidates
         if organized_keys["possible_keys_32"]:
-            print("\n🔑 Millors candidates per a claus:")
+            print("\n🔑 Best key candidates:")
             for i, key in enumerate(organized_keys["possible_keys_32"][:3]):
                 print(f"   {i+1}. {key}")
         
         if organized_keys["possible_tokens_64"]:
-            print("\n🎫 Millors candidates per a tokens:")
+            print("\n🎫 Best token candidates:")
             for i, token in enumerate(organized_keys["possible_tokens_64"][:3]):
                 print(f"   {i+1}. {token[:32]}...{token[-32:]}")
         
         return True
     
     def run_extraction(self):
-        """Executa l'extracció completa"""
-        print("🔧 Extractor de claus Bluetti")
+        """Runs the full extraction"""
+        print("🔧 Bluetti key extractor")
         print("=" * 50)
         
-        # Determina el tipus de fitxer
+        # Determine the file type
         file_path = Path(self.log_file)
         
         if not file_path.exists():
-            print(f"❌ Error: Fitxer no trobat: {self.log_file}")
+            print(f"❌ Error: File not found: {self.log_file}")
             return False
         
         success = False
         
-        # Prova diferents parsers segons l'extensió
+        # Try different parsers depending on the extension
         if file_path.suffix.lower() in ['.log', '.hci']:
-            # Prova primer com btsnoop
+            # Try btsnoop first
             try:
                 success = self.parse_btsnoop_hci()
             except:
-                # Si falla, prova com text
+                # If it fails, try as text
                 success = self.parse_wireshark_text()
         else:
-            # Fitxers de text
+            # Text files
             success = self.parse_wireshark_text()
         
         if success:
@@ -265,17 +265,17 @@ class BluetoothLogParser:
 
 def main():
     if len(sys.argv) < 2:
-        print("Extractor de claus d'encriptació Bluetti")
+        print("Bluetti encryption key extractor")
         print()
-        print("Ús:")
-        print("  python extract_keys.py <fitxer_log> [MAC_ADDRESS]")
+        print("Usage:")
+        print("  python extract_keys.py <log_file> [MAC_ADDRESS]")
         print()
-        print("Fitxers suportats:")
+        print("Supported files:")
         print("  - btsnoop_hci.log (Android)")
-        print("  - Exports de text de Wireshark")
-        print("  - Logs de captura Bluetooth")
+        print("  - Wireshark text exports")
+        print("  - Bluetooth capture logs")
         print()
-        print("Exemples:")
+        print("Examples:")
         print("  python extract_keys.py btsnoop_hci.log")
         print("  python extract_keys.py capture.txt E4:B3:23:5B:F5:76")
         sys.exit(1)
@@ -289,20 +289,20 @@ def main():
         success = extractor.run_extraction()
         
         if success:
-            print("\n🎉 Extracció completada!")
-            print("   Revisa el fitxer extracted_keys.json per veure els resultats")
-            print("   Utilitza les claus candidates per crear encryption_keys.json")
+            print("\n🎉 Extraction completed!")
+            print("   Check the extracted_keys.json file to see the results")
+            print("   Use the candidate keys to create encryption_keys.json")
         else:
-            print("\n❌ Extracció fallida")
-            print("   Verifica que el fitxer sigui un log de Bluetooth vàlid")
+            print("\n❌ Extraction failed")
+            print("   Check that the file is a valid Bluetooth log")
         
         sys.exit(0 if success else 1)
         
     except KeyboardInterrupt:
-        print("\n⏹️  Extracció cancel·lada per l'usuari")
+        print("\n⏹️  Extraction cancelled by the user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Error inesperat: {e}")
+        print(f"\n❌ Unexpected error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

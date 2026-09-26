@@ -1,132 +1,132 @@
-# Contribuir al projecte
+# Contributing to the project
 
-Gràcies per considerar contribuir a aquest projecte! Les contribucions són benvingudes i ajuden a millorar l'eina per a tota la comunitat.
+Thank you for considering contributing to this project! Contributions are welcome and help improve the tool for the whole community.
 
-## Com contribuir
+## How to contribute
 
-### Reportar errors
+### Reporting bugs
 
-Si trobes un error, si us plau:
+If you find a bug, please:
 
-1. Verifica que no existeixi ja un issue similar
-2. Crea un nou issue amb:
-   - Descripció clara del problema
-   - Passos per reproduir l'error
-   - Comportament esperat vs. comportament actual
-   - Informació del sistema (OS, versió Python, etc.)
-   - Logs rellevants (sense dades privades!)
+1. Check that a similar issue does not already exist
+2. Create a new issue with:
+   - A clear description of the problem
+   - Steps to reproduce the bug
+   - Expected behaviour vs. actual behaviour
+   - System information (OS, Python version, etc.)
+   - Relevant logs (without private data!)
 
-### Suggerir millores
+### Suggesting improvements
 
-Per suggerir noves funcionalitats:
+To suggest new features:
 
-1. Obre un issue amb l'etiqueta "enhancement"
-2. Descriu clarament la funcionalitat proposada
-3. Explica per què seria útil
-4. Proporciona exemples d'ús si és possible
+1. Open an issue with the "enhancement" label
+2. Clearly describe the proposed feature
+3. Explain why it would be useful
+4. Provide usage examples if possible
 
-### Contribuir amb codi
+### Contributing code
 
-1. **Fork** el repositori
-2. Crea una **branca** per a la teva funcionalitat:
+1. **Fork** the repository
+2. Create a **branch** for your feature:
    ```bash
-   git checkout -b feature/nova-funcionalitat
+   git checkout -b feature/new-feature
    ```
-3. Fes els teus canvis seguint les guies d'estil
-4. Afegeix tests si és necessari
-5. Assegura't que tots els tests passin
-6. Fes **commit** dels teus canvis:
+3. Make your changes following the style guides
+4. Add tests if necessary
+5. Make sure all tests pass
+6. **Commit** your changes:
    ```bash
-   git commit -m "Afegeix nova funcionalitat"
+   git commit -m "Add new feature"
    ```
-7. Fes **push** a la teva branca:
+7. **Push** to your branch:
    ```bash
-   git push origin feature/nova-funcionalitat
+   git push origin feature/new-feature
    ```
-8. Obre un **Pull Request**
+8. Open a **Pull Request**
 
-## Guies d'estil
+## Style guides
 
-### Codi Python
+### Python code
 
-- Segueix [PEP 8](https://www.python.org/dev/peps/pep-0008/)
-- Utilitza noms descriptius per a variables i funcions
-- Afegeix docstrings a funcions i classes
-- Mantén les línies sota 88 caràcters quan sigui possible
-- Utilitza type hints quan sigui apropiat
+- Follow [PEP 8](https://www.python.org/dev/peps/pep-0008/)
+- Use descriptive names for variables and functions
+- Add docstrings to functions and classes
+- Keep lines under 88 characters when possible
+- Use type hints where appropriate
 
 ### Commits
 
-- Utilitza missatges de commit clars i descriptius
-- Comença amb un verb en imperatiu ("Afegeix", "Corregeix", "Actualitza")
-- Mantén la primera línia sota 50 caràcters
-- Afegeix detalls addicionals en línies següents si cal
+- Use clear, descriptive commit messages
+- Start with a verb in the imperative ("Add", "Fix", "Update")
+- Keep the first line under 50 characters
+- Add extra details on the following lines if needed
 
-### Documentació
+### Documentation
 
-- Escriu documentació en català
-- Utilitza Markdown per a la formatació
-- Inclou exemples pràctics
-- Actualitza el README si els canvis afecten l'ús
+- Write documentation in English
+- Use Markdown for formatting
+- Include practical examples
+- Update the README if the changes affect usage
 
-## Configuració de l'entorn de desenvolupament
+## Development environment setup
 
-1. Clona el repositori:
+1. Clone the repository:
    ```bash
-   git clone https://github.com/[usuari]/bluetti-elite200v2-mqtt.git
+   git clone https://github.com/[user]/bluetti-elite200v2-mqtt.git
    cd bluetti-elite200v2-mqtt
    ```
 
-2. Crea un entorn virtual:
+2. Create a virtual environment:
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
 
-3. Instal·la les dependències de desenvolupament:
+3. Install the development dependencies:
    ```bash
    pip install -r requirements.txt
-   pip install -r requirements-dev.txt  # Si existeix
+   pip install -r requirements-dev.txt  # If it exists
    ```
 
-4. Configura pre-commit hooks (opcional):
+4. Set up the pre-commit hooks (optional):
    ```bash
    pre-commit install
    ```
 
 ## Tests
 
-Abans d'enviar un PR, assegura't que:
+Before submitting a PR, make sure that:
 
-- Tots els tests existents passen
-- Has afegit tests per a noves funcionalitats
-- El codi té una cobertura adequada
+- All existing tests pass
+- You have added tests for new features
+- The code has adequate coverage
 
-Executa els tests amb:
+Run the tests with:
 ```bash
 python -m pytest
 ```
 
-## Seguretat
+## Security
 
-**IMPORTANT**: Mai incloguis dades privades en els teus commits:
+**IMPORTANT**: Never include private data in your commits:
 
-- Claus d'encriptació
-- Adreces MAC reals
-- Credencials MQTT
-- Tokens d'autenticació
+- Encryption keys
+- Real MAC addresses
+- MQTT credentials
+- Authentication tokens
 
-Utilitza sempre dades d'exemple o placeholders.
+Always use example data or placeholders.
 
-## Llicència
+## License
 
-En contribuir a aquest projecte, acceptes que les teves contribucions es llicenciïn sota la mateixa llicència MIT del projecte.
+By contributing to this project, you agree that your contributions will be licensed under the same MIT license as the project.
 
-## Preguntes
+## Questions
 
-Si tens preguntes sobre com contribuir, pots:
+If you have questions about how to contribute, you can:
 
-- Obrir un issue amb l'etiqueta "question"
-- Contactar els mantenidors del projecte
+- Open an issue with the "question" label
+- Contact the project maintainers
 
-Gràcies per contribuir! 🎉
+Thanks for contributing! 🎉

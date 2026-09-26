@@ -1,19 +1,19 @@
-# Dockerfile per a Bluetti Elite 200 V2 MQTT Bridge
+# Dockerfile for the Bluetti Elite 200 V2 MQTT Bridge
 
 FROM python:3.11-slim
 
-# Metadades
+# Metadata
 LABEL maintainer="Bluetti Elite 200 V2 Community"
 LABEL description="MQTT bridge for Bluetti Elite 200 V2 power station"
 LABEL version="1.0.0"
 
-# Variables d'entorn
+# Environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Instal·la dependències del sistema
+# Install the system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bluetooth \
     bluez \
@@ -26,43 +26,43 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cargo \
     && rm -rf /var/lib/apt/lists/*
 
-# Crea usuari no-root
+# Create a non-root user
 RUN groupadd -r bluetti && useradd -r -g bluetti bluetti
 
-# Directori de treball
+# Working directory
 WORKDIR /app
 
-# Copia fitxers de dependències
+# Copy the dependency files
 COPY requirements.txt .
 
-# Instal·la dependències Python
+# Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia codi de l'aplicació
+# Copy the application code
 COPY bluetti_mqtt/ ./bluetti_mqtt/
 COPY tools/ ./tools/
 COPY setup.py pyproject.toml ./
 COPY README.md ./
 
-# Instal·la l'aplicació
+# Install the application
 RUN pip install -e .
 
-# Crea directoris per a configuració
+# Create the configuration directories
 RUN mkdir -p /app/config /app/logs
 
-# Canvia propietari dels fitxers
+# Change the file ownership
 RUN chown -R bluetti:bluetti /app
 
-# Canvia a usuari no-root
+# Switch to the non-root user
 USER bluetti
 
-# Volums per a configuració i logs
+# Volumes for configuration and logs
 VOLUME ["/app/config", "/app/logs"]
 
-# Port per defecte (no utilitzat directament, però informatiu)
+# Default port (not used directly, but informative)
 EXPOSE 1883
 
-# Variables d'entorn per defecte
+# Default environment variables
 ENV BLUETTI_MAC=""
 ENV MQTT_HOST=""
 ENV MQTT_PORT=1883
@@ -72,7 +72,7 @@ ENV MQTT_TOPIC="bluetti"
 ENV LOG_LEVEL="info"
 ENV ENCRYPTION_KEY_FILE="/app/config/encryption_keys.json"
 
-# Script d'entrada
+# Entrypoint script
 COPY docker-entrypoint.sh /app/
 USER root
 RUN chmod +x /app/docker-entrypoint.sh

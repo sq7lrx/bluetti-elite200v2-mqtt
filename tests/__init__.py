@@ -1,1 +1,1 @@
-# Tests per a bluetti-elite200v2-mqtt
+# Tests for bluetti-elite200v2-mqtt
