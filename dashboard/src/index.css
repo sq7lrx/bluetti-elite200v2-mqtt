@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1100px 600px at 12% -10%, #16233c 0%, transparent 60%),
+    radial-gradient(900px 500px at 92% 0%, #1d1a33 0%, transparent 55%),
+    #08080b;
+  background-attachment: fixed;
+  color: #e7e7ea;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #2b2b35;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+
+.pulse-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.flow-line {
+  stroke-dasharray: 6 6;
+  animation: flow-dash 1s linear infinite;
+}
+
+/* Slowly rotating conic halo behind the state-of-charge ring. */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-slow {
+  animation: spin-slow 9s linear infinite;
+}
+
+/* Electrolyte surface inside the battery glyph. The sine wave repeats every
+   44 SVG user units, so translating by exactly one period loops seamlessly. */
+@keyframes wave-slide {
+  to {
+    transform: translateX(-44px);
+  }
+}
+
+.wave-slide {
+  animation: wave-slide 3.4s linear infinite;
+}
+
+.wave-slide-slow {
+  animation: wave-slide 5.2s linear infinite reverse;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.breathe {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(2px) scale(0.85);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scale(1.05);
+  }
+}
+
+.bubble {
+  animation: rise 2.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin-slow,
+  .wave-slide,
+  .wave-slide-slow,
+  .breathe,
+  .bubble,
+  .flow-line,
+  .pulse-ring::after {
+    animation: none;
+  }
+}
