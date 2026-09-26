@@ -64,7 +64,7 @@ class CommandLineHandler:
             help='The device MAC(s) to connect to')
 
         # The default event loop on windows doesn't support add_reader, which
-        # is required by asyncio-mqtt
+        # is required by aiomqtt
         if sys.platform == 'win32':
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -79,23 +79,29 @@ class CommandLineHandler:
             parser.print_help()
 
     def start(self, args: argparse.Namespace):
-        loop = asyncio.get_event_loop()
+        try:
+            asyncio.run(self.start_async(args))
+        except (asyncio.CancelledError, KeyboardInterrupt):
+            pass
+        finally:
+            logging.debug("Shut down completed")
+
+    async def start_async(self, args: argparse.Namespace):
+        loop = asyncio.get_running_loop()
 
         # Register signal handlers for safe shutdown
         if sys.platform != 'win32':
             signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
             for s in signals:
-                loop.add_signal_handler(s, lambda: asyncio.create_task(shutdown(loop)))
+                loop.add_signal_handler(s, lambda: asyncio.create_task(shutdown()))
 
         # Register a global exception handler so we don't hang
         loop.set_exception_handler(handle_global_exception)
 
-        try:
-            loop.create_task(self.run(args))
-            loop.run_forever()
-        finally:
-            loop.close()
-            logging.debug("Shut down completed")
+        await self.run(args)
+
+        # Keep running until a signal or a fatal error cancels us
+        await asyncio.Event().wait()
 
     async def run(self, args: argparse.Namespace):
         loop = asyncio.get_running_loop()
@@ -135,15 +141,14 @@ def handle_global_exception(loop, context):
         logging.error('Crashing with uncaught exception:', exc_info=context['exception'])
     else:
         logging.error(f'Crashing with uncaught exception: {context["message"]}')
-    asyncio.create_task(shutdown(loop))
+    asyncio.create_task(shutdown())
 
 
-async def shutdown(loop: asyncio.AbstractEventLoop):
+async def shutdown():
     logging.info('Shutting down...')
     tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
     [task.cancel() for task in tasks]
     await asyncio.gather(*tasks, return_exceptions=True)
-    loop.stop()
 
 
 def setup_logging(level):
