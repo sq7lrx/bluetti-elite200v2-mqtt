@@ -1,83 +1,100 @@
-version: '3.8'
+# Same stack as docker-compose.yml, but pulls the published bridge image
+# instead of building it from source.
+#
+#   docker compose -f docker-compose.prebuilt.yml up -d
+#
+# The dashboard has no published image yet, so it is still built locally.
 
-# Docker Compose setup that uses the pre-built image from the GitHub Container Registry
-# Usage: docker-compose -f docker-compose.prebuilt.yml up -d
+name: bluetti-elite200v2
+
+x-bluetooth: &bluetooth
+  privileged: true
+  network_mode: host
+  volumes:
+    - /var/run/dbus:/var/run/dbus:ro
 
 services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: bluetti-mosquitto
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    environment:
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+    volumes:
+      - ./mosquitto/docker-entrypoint.sh:/entrypoint.sh:ro
+      - mosquitto-data:/mosquitto/data
+    ports:
+      - "127.0.0.1:${MQTT_PORT:-1883}:1883"
+    networks:
+      - bluetti
+
   bluetti-mqtt:
-    # Uses the pre-built image from the GitHub Container Registry
     image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-elite200v2-mqtt
     restart: unless-stopped
-    
-    # Access to the host's Bluetooth
-    privileged: true
-    network_mode: host
-    
-    # Environment variables - SET THESE VALUES!
+    <<: *bluetooth
+    depends_on:
+      - mosquitto
     environment:
-      - BLUETTI_MAC=XX:XX:XX:XX:XX:XX  # Replace with your MAC
-      - MQTT_HOST=192.168.1.100        # Replace with your MQTT IP
-      - MQTT_PORT=1883
-      - MQTT_USERNAME=mqttuser          # Optional
-      - MQTT_PASSWORD=mqttpass          # Optional
-      - MQTT_TOPIC=bluetti
-      - LOG_LEVEL=info
-      - POLLING_INTERVAL=5              # Optional: interval in seconds
-      - HA_CONFIG=normal                # normal, none, advanced
-      - VERBOSE=false                   # true for detailed logs
-    
-    # Volumes for configuration and logs
+      BLUETTI_MAC: ${BLUETTI_MAC:?set BLUETTI_MAC in .env}
+      MQTT_HOST: 127.0.0.1
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+      MQTT_TOPIC: ${MQTT_TOPIC:-bluetti}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      POLLING_INTERVAL: ${POLLING_INTERVAL:-5}
+      HA_CONFIG: ${HA_CONFIG:-normal}
+      VERBOSE: ${VERBOSE:-false}
     volumes:
-      - ./config:/app/config:ro         # Mount encryption_keys.json here
-      - ./logs:/app/logs:rw             # Application logs
-      - /var/run/dbus:/var/run/dbus:ro  # D-Bus access for Bluetooth
-    
-    # Devices required for Bluetooth
-    devices:
-      - /dev/bus/usb:/dev/bus/usb       # USB Bluetooth adapters
-    
-    # Labels for organization
-    labels:
-      - "com.docker.compose.project=bluetti-elite200v2"
-      - "com.docker.compose.service=mqtt-bridge"
+      - /var/run/dbus:/var/run/dbus:ro
+      - ./logs:/app/logs:rw
 
-  # Optional service for device discovery
+  dashboard:
+    build:
+      context: ./dashboard
+    container_name: bluetti-dashboard
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+      MQTT_TOPIC: ${MQTT_TOPIC:-bluetti}
+      DASHBOARD_HISTORY_POINTS: ${DASHBOARD_HISTORY_POINTS:-360}
+    ports:
+      - "${DASHBOARD_PORT:-8787}:8787"
+    networks:
+      - bluetti
+
   bluetti-discovery:
     image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-discovery
-    privileged: true
-    network_mode: host
+    <<: *bluetooth
     command: bluetti-discovery
-    
-    volumes:
-      - /var/run/dbus:/var/run/dbus:ro
-    
-    devices:
-      - /dev/bus/usb:/dev/bus/usb
-    
-    profiles:
-      - discovery  # Only runs with --profile discovery
+    profiles: [discovery]
 
-  # Optional service for logging
   bluetti-logger:
     image: ghcr.io/sq7lrx/bluetti-elite200v2-mqtt:latest
     container_name: bluetti-logger
-    privileged: true
-    network_mode: host
+    <<: *bluetooth
     command: bluetti-logger
-    
     environment:
-      - BLUETTI_MAC=XX:XX:XX:XX:XX:XX  # Replace with your MAC
-      - LOG_FILE=/app/logs/device.log
-    
+      BLUETTI_MAC: ${BLUETTI_MAC:?set BLUETTI_MAC in .env}
+      MQTT_HOST: 127.0.0.1
+      LOG_FILE: /app/logs/device.log
     volumes:
-      - ./config:/app/config:ro
-      - ./logs:/app/logs:rw
       - /var/run/dbus:/var/run/dbus:ro
-    
-    devices:
-      - /dev/bus/usb:/dev/bus/usb
-    
-    profiles:
-      - logger  # Only runs with --profile logger
+      - ./logs:/app/logs:rw
+    profiles: [logger]
+
+volumes:
+  mosquitto-data:
+
+networks:
+  bluetti:
+    driver: bridge

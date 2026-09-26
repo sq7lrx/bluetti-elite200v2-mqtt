@@ -29,10 +29,13 @@ if [ -z "$MQTT_HOST" ]; then
 fi
 
 # Check that the key file exists
-if [ ! -f "$ENCRYPTION_KEY_FILE" ]; then
-    log_error "Encryption key file not found: $ENCRYPTION_KEY_FILE"
-    log_error "Mount a volume with the encryption_keys.json file at /app/config/"
-    exit 1
+#
+# Note: the bridge does not read this file. Encryption is self-contained in
+# bluetti_mqtt/bluetooth/encryption.py, which uses well-known keys and detects
+# encrypted devices from the BLE advertisement. The check is kept as a warning
+# only, so a missing file never blocks startup.
+if [ -n "$ENCRYPTION_KEY_FILE" ] && [ ! -f "$ENCRYPTION_KEY_FILE" ]; then
+    log_warning "Encryption key file not found: $ENCRYPTION_KEY_FILE (not required)"
 fi
 
 # Build the command arguments
