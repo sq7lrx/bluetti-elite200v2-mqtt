@@ -112,7 +112,7 @@ class KeyVerifier:
             print("✅ Connexió Bluetooth establerta")
             
             # Descobreix serveis
-            services = await self.client.get_services()
+            services = list(self.client.services)
             
             # Verifica que els serveis necessaris existeixin
             notification_found = False

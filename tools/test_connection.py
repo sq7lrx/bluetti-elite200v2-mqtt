@@ -84,7 +84,7 @@ class ConnectionTester:
             
             # Descobreix serveis
             print("🔍 Descobrint serveis...")
-            services = await self.client.get_services()
+            services = list(self.client.services)
             
             print(f"✅ Trobats {len(services)} serveis:")
             
