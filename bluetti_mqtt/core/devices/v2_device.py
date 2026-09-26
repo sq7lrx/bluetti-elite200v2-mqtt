@@ -123,7 +123,11 @@ class V2Device(BluettiDevice):
         # See CtrlStatusMask
         self.struct.add_uint_field("ctrl_status", ProtocolAddress.HOME_DATA.value + 48)
 
-        self.struct.add_uint8_field("grid_parallel_soc", ProtocolAddress.HOME_DATA.value + 51)
+        # Probed on a real Elite 200 V2: +50 holds a uint16 of 404, tracking the
+        # 40.4 kWh feedback counter, and this uint8 read its low byte (0x94 =
+        # 148), which was published as a bogus "SOC". Disabled until the real
+        # meaning of +50 is known.
+        # self.struct.add_uint8_field("grid_parallel_soc", ProtocolAddress.HOME_DATA.value + 51)
         self.struct.add_uint32_field("total_dc_power", ProtocolAddress.HOME_DATA.value + 80)
         self.struct.add_uint32_field("total_ac_power", ProtocolAddress.HOME_DATA.value + 84)
         self.struct.add_uint32_field("total_pv_power", ProtocolAddress.HOME_DATA.value + 88)
@@ -137,14 +141,54 @@ class V2Device(BluettiDevice):
         self.struct.add_enum_field("charging_mode", ProtocolAddress.HOME_DATA.value + 120, ChargingMode)
 
         self.struct.add_uint8_field("inv_working_status", ProtocolAddress.HOME_DATA.value + 123)
-        self.struct.add_uint32_field("pv_to_ac_energy", ProtocolAddress.HOME_DATA.value + 124)
-        self.struct.add_uint8_field("self_sufficiency_rate", ProtocolAddress.HOME_DATA.value + 129)
-        self.struct.add_uint32_field("pv_to_ac_power", ProtocolAddress.HOME_DATA.value + 130)
-        self.struct.add_uint32_field("pack_dsg_energy_total", ProtocolAddress.HOME_DATA.value + 134)
+        # Scale 1 like its sibling energy counters: reads 404 = 40.4 kWh.
+        self.struct.add_decimal32_field("pv_to_ac_energy", ProtocolAddress.HOME_DATA.value + 124, 1)
+        # Probed: +128 is a uint16 of 404 (another 40.4 kWh counter) and this
+        # uint8 read its low byte, publishing 148 as a "percentage". Disabled.
+        # self.struct.add_uint8_field("self_sufficiency_rate", ProtocolAddress.HOME_DATA.value + 129)
+        # Probed: reads 404 while PV input and AC output are both 0 W, so this
+        # is not a power reading. Disabled until identified.
+        # self.struct.add_uint32_field("pv_to_ac_power", ProtocolAddress.HOME_DATA.value + 130)
+        self.struct.add_decimal32_field("pack_dsg_energy_total", ProtocolAddress.HOME_DATA.value + 134, 1)
         self.struct.add_uint_field("rate_voltage", ProtocolAddress.HOME_DATA.value + 138)
         self.struct.add_uint_field("rate_frequency", ProtocolAddress.HOME_DATA.value + 140)
 
+        ## Inverter PvInfo
+        # Probed on a real Elite 200 V2 with nothing plugged into the solar
+        # input. The +4 counter read 21 -> 2.1 kWh, exactly matching
+        # total_pv_charging_energy from HOME_DATA, which confirms the base
+        # alignment of this block.
+        self.struct.add_uint32_field("total_pv_power", ProtocolAddress.INV_PV_INFO.value + 0)
+        self.struct.add_decimal32_field("pv_total_chg_energy", ProtocolAddress.INV_PV_INFO.value + 4, 1)
+        # The per-channel values were confirmed against a live 12 V car socket:
+        # +24 read 74, +26 read 110 and +28 read 67, and 11.0 V * 6.7 A = 73.7 W
+        # matches the 74 W total, which fixes both the offsets and the scales.
+        # +20 is 0 when nothing is plugged in and 1 once an input is present.
+        # +22 is a constant 101 on this firmware and is left unmapped.
+        self.struct.add_uint8_field("pv_num_channels", ProtocolAddress.INV_PV_INFO.value + 19)
+        self.struct.add_uint_field("pv_channel_online", ProtocolAddress.INV_PV_INFO.value + 20)
+        self.struct.add_uint_field("dc_input_power1", ProtocolAddress.INV_PV_INFO.value + 24)
+        self.struct.add_decimal_field("dc_input_voltage1", ProtocolAddress.INV_PV_INFO.value + 26, 1)
+        self.struct.add_decimal_field("dc_input_current1", ProtocolAddress.INV_PV_INFO.value + 28, 1)
+
+        ## Inverter InverterInfo
+        # This block was never polled, which is why internal_ac_frequency had no
+        # source and the dashboard showed no value. Probed with AC output on:
+        #   +0  49.9 Hz, stable across samples while voltage and current jitter,
+        #       which is how a crystal-locked inverter behaves. INV_GRID_INFO
+        #       likewise starts with its frequency at +0.
+        #   +20 apparent power, reconciles as V * I (229.6 * 0.9 = 206.6 -> 206)
+        #   +22 output voltage, +24 output current
+        self.struct.add_decimal_field("internal_ac_frequency", ProtocolAddress.INV_INVERTER_INFO.value + 0, 1)
+        self.struct.add_uint_field("inv_apparent_power", ProtocolAddress.INV_INVERTER_INFO.value + 20)
+        self.struct.add_decimal_field("inv_output_current", ProtocolAddress.INV_INVERTER_INFO.value + 24, 1)
+
         ## Inverter GridInfo
+        # Note: the Elite 200 V2 is a portable unit that cannot export to the
+        # grid, so despite their upstream names the "feedback" counters below do
+        # not measure grid export. They read an identical value to
+        # total_feedback_energy and pv_to_ac_energy, so all three are likely
+        # mirrors of one unidentified counter.
         self.struct.add_decimal_field("grid_frequency", ProtocolAddress.INV_GRID_INFO.value + 0, 1)
         self.struct.add_uint32_field("total_grid_power", ProtocolAddress.INV_GRID_INFO.value + 2)
         self.struct.add_decimal32_field("grid_total_chg_energy", ProtocolAddress.INV_GRID_INFO.value + 6, 1)
@@ -183,9 +227,27 @@ class V2Device(BluettiDevice):
         self.struct.add_uint8_field("pack_running_status", ProtocolAddress.PACK_MAIN_INFO.value + 17)
         # 1 charging, 2 discharging
         self.struct.add_uint8_field("pack_charging_status", ProtocolAddress.PACK_MAIN_INFO.value + 19)
-        self.struct.add_decimal_field("pack_max_chg_voltage", ProtocolAddress.PACK_MAIN_INFO.value + 20, 2)
+        # Scale 1, not 2: this reads 426 on a 12S pack, i.e. 42.6 V (3.55 V/cell).
+        # A scale of 2 would give an impossible 4.26 V for a ~39 V pack.
+        self.struct.add_decimal_field("pack_max_chg_voltage", ProtocolAddress.PACK_MAIN_INFO.value + 20, 1)
         self.struct.add_decimal_field("pack_max_chg_current", ProtocolAddress.PACK_MAIN_INFO.value + 22, 1)
         self.struct.add_decimal_field("pack_max_dsg_current", ProtocolAddress.PACK_MAIN_INFO.value + 24, 1)
+
+        ## Pack cell info
+        # Probed on an Elite 200 V2: this block is exactly 20 registers long and
+        # reading past it returns MODBUS exception 2. Layout:
+        #   +0  uint16 cell count (12)
+        #   +2  uint16 temperature sensor count (4)
+        #   +4  uint16[12] cell voltages in mV
+        #   +28 uint8[4]  temperatures, repeated as uint16[4] at +32
+        # Temperatures are reported in Fahrenheit, like pack_avg_temp.
+        self.struct.add_uint_field("pack_cell_count", ProtocolAddress.PACK_SUB_PACK_INFO.value + 0)
+        self.struct.add_uint_field("pack_temp_sensor_count", ProtocolAddress.PACK_SUB_PACK_INFO.value + 2)
+        self.struct.add_decimal_array_field("cell_voltages", ProtocolAddress.PACK_SUB_PACK_INFO.value + 4, 12, 3)
+        self.struct.add_uint_field("pack_temp1", ProtocolAddress.PACK_SUB_PACK_INFO.value + 32)
+        self.struct.add_uint_field("pack_temp2", ProtocolAddress.PACK_SUB_PACK_INFO.value + 34)
+        self.struct.add_uint_field("pack_temp3", ProtocolAddress.PACK_SUB_PACK_INFO.value + 36)
+        self.struct.add_uint_field("pack_temp4", ProtocolAddress.PACK_SUB_PACK_INFO.value + 38)
 
         mqtt_name_map = {
             'ac_switch': 'ac_output_on',
@@ -240,10 +302,16 @@ class V2Device(BluettiDevice):
     @property
     def polling_commands(self) -> List[ReadHoldingRegisters]:
         return [
-            ReadHoldingRegisters(ProtocolAddress.HOME_DATA.value, 67),
+            # 71, not 67: rate_voltage (+138), rate_frequency (+140) and
+            # pack_dsg_energy_total (+134) sit past register 67 and were never
+            # read. Probed up to 80 registers without error.
+            ReadHoldingRegisters(ProtocolAddress.HOME_DATA.value, 71),
+            ReadHoldingRegisters(ProtocolAddress.INV_PV_INFO.value, 31),
             ReadHoldingRegisters(ProtocolAddress.INV_GRID_INFO.value, 31),
             ReadHoldingRegisters(ProtocolAddress.INV_LOAD_INFO.value, 48),
+            ReadHoldingRegisters(ProtocolAddress.INV_INVERTER_INFO.value, 13),
             ReadHoldingRegisters(ProtocolAddress.PACK_MAIN_INFO.value, 31),
+            ReadHoldingRegisters(ProtocolAddress.PACK_SUB_PACK_INFO.value, 20),
         ]
 
     @property
@@ -252,10 +320,16 @@ class V2Device(BluettiDevice):
             # A few of these depend on the protocol version, but newer protocols
             # # seem to just add values after the existing ones
             ReadHoldingRegisters(ProtocolAddress.BASE_CONFIG.value, 16),
-            ReadHoldingRegisters(ProtocolAddress.HOME_DATA.value, 67),
+            # 71, not 67: rate_voltage (+138), rate_frequency (+140) and
+            # pack_dsg_energy_total (+134) sit past register 67 and were never
+            # read. Probed up to 80 registers without error.
+            ReadHoldingRegisters(ProtocolAddress.HOME_DATA.value, 71),
+            ReadHoldingRegisters(ProtocolAddress.INV_PV_INFO.value, 31),
             ReadHoldingRegisters(ProtocolAddress.INV_GRID_INFO.value, 31),
             ReadHoldingRegisters(ProtocolAddress.INV_LOAD_INFO.value, 48),
+            ReadHoldingRegisters(ProtocolAddress.INV_INVERTER_INFO.value, 13),
             ReadHoldingRegisters(ProtocolAddress.PACK_MAIN_INFO.value, 31),
+            ReadHoldingRegisters(ProtocolAddress.PACK_SUB_PACK_INFO.value, 20),
         ]
 
     @property
